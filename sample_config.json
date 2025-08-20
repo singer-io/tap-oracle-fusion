@@ -1,0 +1,8 @@
+{
+  "client_id": "client id",
+  "client_secret": "client secret",
+  "grant_type": "grant type",
+  "scope": "default scope",
+  "page_size": 999,
+  "start_date": "2020-07-01T00:00:00Z"
+}
