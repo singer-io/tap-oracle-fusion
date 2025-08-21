@@ -14,6 +14,7 @@ setup(name="tap-oracle-fusion",
         "singer-python==6.1.1",
         "requests==2.32.4",
         "backoff==2.2.1",
+        "parameterized==0.9.0"
       ],
       extras_require={
             "dev": [
