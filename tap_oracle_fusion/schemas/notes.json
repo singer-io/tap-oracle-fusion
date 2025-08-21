@@ -1,1 +1,203 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CurcyConvRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VisibilityCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ContactRelationshipId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UpdateFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "NoteNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SourceObjectCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "FormattedPhoneNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CorpCurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NoteTxt": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NoteTitle": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NoteId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatorPartyId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "FormattedAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NoteTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EmailAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DeleteFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "SourceObjectId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ParentNoteId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "SourceSystem": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

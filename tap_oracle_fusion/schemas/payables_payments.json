@@ -1,1 +1,500 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "CheckId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentReference": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaperDocumentNumber": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentNumber": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentFileReference": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentProcessRequest": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentAmount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PaymentDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "AccountingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "PaymentDescription": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ConversionRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ConversionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ClearingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ClearingAmount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ClearingLedgerAmount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ClearingConversionRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ClearingConversionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ClearingConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CrossCurrencyRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MaturityDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "MaturityConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MaturityConversionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "MaturityConversionRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "AnticipatedValueDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ClearingValueDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "StopDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "VoidDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "VoidAccountingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "PaymentStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SeparateRemittanceAdviceCreated": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountingStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReconciledFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PaymentType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "WithheldAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "BankChargeAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "LegalEntity": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentFunction": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Payee": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ProcurementBU": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PayeeSite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EmployeeAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SupplierNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ThirdPartySupplier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ThirdPartyAddressName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExternalBankAccountId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RemitToAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DisbursementBankAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DisbursementBankAccountName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentMethodCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentMethod": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentDocument": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentProcessProfile": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentCategory": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentSequence": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VoucherNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentBaseAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "PaymentBaseCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AddressLine1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AddressLine2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AddressLine3": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AddressLine4": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "City": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "County": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Province": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "State": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Country": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Zip": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string",
+            "format": "uri"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

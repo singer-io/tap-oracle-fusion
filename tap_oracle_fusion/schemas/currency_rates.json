@@ -1,1 +1,36 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "FromCurrency": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ToCurrency": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "UserConversionType": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ConversionDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "ConversionRate": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  }
+}

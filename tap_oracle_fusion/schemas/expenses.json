@@ -1,1 +1,765 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "AgencyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AssignmentId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "AuditAdjustmentReason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AuditAdjustmentReasonCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AwtGroupId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BilledAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "BilledCurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CardId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CheckoutDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CreditCardTrxnId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DailyAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "DailyDistance": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "DepartureLocationId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DestinationFrom": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DestinationTo": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DistanceUnitCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EndDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "EndDateTimestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "EndOdometer": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ExchangeRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ExpenseCategoryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseCreationMethodCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ExpenseReference": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ExpenseReportId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseTemplateId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ExpenseTypeCategoryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseTypeId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "FlightClassLimit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FlightDuration": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FlightNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FuelType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ImageReceiptRequiredFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "ItemizationParentExpenseId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ItemizationReceiptBusinessTotalAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ItemizationReceiptPersonalTotalAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ItineraryReservationId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Justification": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "JustificationRequiredFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LicensePlateNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Location": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LocationId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "LongTermTripFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LongTermTripStartDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "MerchantDocumentNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MerchantName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MerchantReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MerchantTaxRegNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MerchantTaxpayerId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MileagePolicyId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "NumberOfAttendees": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "NumberOfDays": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "NumberPeople": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "OrgId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PassengerAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "PassengerName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PassengerRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentDueFromCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PersonId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PersonalReceiptAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "PolicyShortpayFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PolicyViolatedFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PolicyWarningFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PolicyWarningReasonCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PreparerId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RatePerPassenger": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ReceiptAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ReceiptCurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReceiptDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ReceiptMissingDecRequiredFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReceiptMissingFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReceiptRequiredFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "ReceiptVerifiedFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReimbursableAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ReimbursementCurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SequenceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "StartDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "StartDateTimestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "StartOdometer": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "TaxClassificationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TicketClassCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TicketNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TravelMethodCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TravelType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TripDistance": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "UOMDays": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationErrorFlag": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationErrorMessages": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationWarningMessages": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VehicleCategoryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VehicleType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ZoneCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ZoneTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PersonName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseTemplate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReceiptCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReimbursementCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DistanceUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TicketClass": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseSourceName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Request": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AttachmentExists": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpenseReportStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AuthTrxnNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TravelTypeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VehicleCategory": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VehicleTypeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FuelTypeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxClassification": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CountryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AutoSubmitDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

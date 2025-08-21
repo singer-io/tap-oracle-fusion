@@ -1,1 +1,81 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "BankAccountId": {
+      "type": "number"
+    },
+    "_Bank__Acct__Global__Segment1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "_Bank__Acct__Global__Segment2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "__FLEX_Context": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "__FLEX_Context_DisplayValue": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

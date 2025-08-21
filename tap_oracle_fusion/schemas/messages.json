@@ -1,1 +1,27 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "errorCode": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Unique error code representing the error"
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Human-readable description of the error"
+    },
+    "resourceType": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Type of the resource related to the error"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,1 +1,373 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "AccountHolderName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountHolderNameAlt": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountSuffix": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AgencyLocationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ApUseAllowedFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "ArUseAllowedFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "BankAccountId": {
+      "type": "number"
+    },
+    "BankAccountName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankAccountNameAlt": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankAccountNumberElectronic": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CheckDigits": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DataSecurityFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EFTUserNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EndDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "IBANNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MaskedAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MaskedIBAN": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "MaximumCheckAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "MaximumOutlay": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "MinimumCheckAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "MultiCurrencyAllowedFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "NettingAccountFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PayUseAllowedFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PooledFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "ReconStartDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "SecondaryAccountReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TargetBalance": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ZeroAmountAllowed": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "BankNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BranchNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LegalEntityName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CashAccountCombination": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CashClearingAccountCombination": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReconciliationDifferenceAccountCombination": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReversalProcessingMethod": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RulesetName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ToleranceRuleName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ParsingRuleSetName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CountryName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankBranchName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankExchangeRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountingConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TransactionCalendar": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

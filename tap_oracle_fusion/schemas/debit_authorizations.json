@@ -1,1 +1,65 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "DebitAuthorizationReferenceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CustomerBankAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankBranchName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uri"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

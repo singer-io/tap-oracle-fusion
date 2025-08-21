@@ -1,1 +1,117 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "InvoiceId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "InvoiceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "InvoiceReceivedDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "InvoiceCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceTypeLookupCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExchangeDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ExchangeRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "LegalEntityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "LegalEntityName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceIncludesPrepayFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

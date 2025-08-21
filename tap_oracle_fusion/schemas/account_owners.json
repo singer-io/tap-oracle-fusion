@@ -1,1 +1,113 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "AccountOwnerPartyIdentifier": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "AccountOwnerPartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountOwnerPartyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PrimaryOwnerIndicator": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "StartDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "EndDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "AccountOwnerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Intent": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PersonId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,1 +1,162 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "AttachedRemittanceStubFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "FirstAvailableDocumentNumber": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "InactiveDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastAvailableDocumentNumber": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "LastIssuedDocumentNumber": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ManualPaymentsOnlyFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "NumberOfLinesPERRemitStub": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "NumberOfSetupDocuments": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "PaymentDocumentId": {
+      "type": "number"
+    },
+    "PaymentDocumentName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaperStockType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FormatName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentDocumentCategory": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

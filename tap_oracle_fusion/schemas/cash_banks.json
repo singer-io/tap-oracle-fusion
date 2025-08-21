@@ -1,23 +1,8 @@
 {
   "type": "object",
   "properties": {
-    "BankBranchName": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "BankBranchNameAlt": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "BankBranchType": {
-      "type": [
-        "null",
-        "string"
-      ]
+    "BankPartyId": {
+      "type": "number"
     },
     "BankName": {
       "type": [
@@ -37,37 +22,19 @@
         "string"
       ]
     },
-    "BankPartyNumber": {
+    "Description": {
       "type": [
         "null",
         "string"
       ]
     },
-    "BranchNumber": {
+    "TaxpayerIdNumber": {
       "type": [
         "null",
         "string"
       ]
     },
-    "BranchNumberType": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "BranchPartyId": {
-      "type": [
-        "null",
-        "number"
-      ]
-    },
-    "BranchPartyNumber": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "CountryName": {
+    "TaxRegistrationNumber": {
       "type": [
         "null",
         "string"
@@ -86,42 +53,6 @@
       ],
       "format": "date-time"
     },
-    "Description": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "EDIIdNumber": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "EDILocation": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "EFTSWIFTCode": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "EFTUserNumber": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "RFCIdentifier": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "LastUpdateDate": {
       "type": [
         "null",
@@ -129,13 +60,25 @@
       ],
       "format": "date-time"
     },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "LastUpdatedBy": {
       "type": [
         "null",
         "string"
       ]
     },
-    "LastUpdateLogin": {
+    "BankPartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CountryName": {
       "type": [
         "null",
         "string"

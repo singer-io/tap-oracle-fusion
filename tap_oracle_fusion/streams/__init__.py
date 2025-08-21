@@ -2,7 +2,7 @@ from tap_oracle_fusion.streams.bank_accounts import BankAccounts
 from tap_oracle_fusion.streams.cash_bank_account_dff import CashBankAccountDff
 from tap_oracle_fusion.streams.bank_account_payment_documents import BankAccountPaymentDocuments
 from tap_oracle_fusion.streams.cash_bank_branches import CashBankBranches
-from tap_oracle_fusion.streams.cashBanks import Cashbanks
+from tap_oracle_fusion.streams.cash_banks import CashBanks
 from tap_oracle_fusion.streams.brazilian_fiscal_documents import BrazilianFiscalDocuments
 from tap_oracle_fusion.streams.cash_pools import CashPools
 from tap_oracle_fusion.streams.cash_pool_members import CashPoolMembers
@@ -36,7 +36,7 @@ STREAMS = {
     "cash_bank_account_dff": CashBankAccountDff,
     "bank_account_payment_documents": BankAccountPaymentDocuments,
     "cash_bank_branches": CashBankBranches,
-    "cashBanks": Cashbanks,
+    "cash_banks": CashBanks,
     "brazilian_fiscal_documents": BrazilianFiscalDocuments,
     "cash_pools": CashPools,
     "cash_pool_members": CashPoolMembers,
