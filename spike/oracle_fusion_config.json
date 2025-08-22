@@ -1,0 +1,438 @@
+{
+  "tap_name": "Oracle_fusion",
+  "required_config_keys": [
+    "client_id",
+    "client_secret",
+    "start_date",
+    "grant_type",
+    "scope"
+  ],
+  "page_size": 100,
+  "next_page_key": "hasMore",
+  "pagination_key": "limit",
+  "headers": {
+    "Accept": "application/json"
+  },
+  "params": {},
+  "auth_header_key": "Authorization",
+  "auth_config_key": "access_token",
+  "base_url": "https://{instance}.fa.{region}.oraclecloud.com",
+  "streams": [
+    {
+      "name": "bank_accounts",
+      "key_properties": [
+        "BankAccountId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": ["CreationDate", "LastUpdateDate"],
+      "path": "cashBankAccounts",
+      "data_key": "items",
+      "parent": "",
+      "children": [
+        "cash_bank_account_dff","bank_account_payment_documents"
+      ],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashbankaccounts-get.html"
+    },
+    {
+      "name": "cash_bank_account_dff",
+      "key_properties": [
+        "BankAccountId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "cashBankAccounts/{BankAccountId}/child/cashBankAccountDFF",
+      "data_key": "items",
+      "parent": "bank_accounts",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/api-bank-accounts-bank-account-descriptive-flexfields.html"
+    },
+    {
+      "name": "bank_account_payment_documents",
+      "key_properties": [
+        "PaymentDocumentId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "cashBankAccounts/{BankAccountId}/child/bankAccountPaymentDocuments",
+      "data_key": "items",
+      "parent": "bank_accounts",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashbankaccounts-bankaccountid-child-bankaccountpaymentdocuments-get.html"
+    },
+    {
+      "name": "cash_bank_branches",
+      "key_properties": [
+        "BankPartyId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "cashBankBranches",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashbankbranches-get.html"
+    },
+    {
+      "name": "cash_banks",
+      "key_properties": [
+        "BankPartyId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "cashBanks",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashbanks-get.html"
+    },
+    {
+      "name": "brazilian_fiscal_documents",
+      "key_properties": [
+        "DocumentRelationId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "brazilianFiscalDocuments",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-brazilianfiscaldocuments-get.html"
+    },
+    {
+      "name": "cash_pools",
+      "key_properties": [
+        "CashPoolId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate", "LastUpdateDate"
+      ],
+      "path": "cashPools",
+      "data_key": "items",
+      "parent": "",
+      "children": [
+        "cash_pool_members"
+      ],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashpools-get.html"
+    },
+    {
+      "name": "cash_pool_members",
+      "key_properties": ["CashPoolMemberId"],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": ["CreationDate", "LastUpdateDate"],
+      "path": "cashPools/{CashPoolId}/child/cashPoolMembers",
+      "data_key": "items",
+      "parent": "cash_pools",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-cashpools-cashpoolid-child-cashpoolmembers-get.html"
+    },
+    {
+      "name": "collection_strategies",
+      "key_properties": [
+        "StrategyId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate", "LastUpdateDate"
+      ],
+      "path": "collectionStrategies",
+      "data_key": "items",
+      "parent": "",
+      "children": ["tasks"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-collectionstrategies-get.html"
+    },
+    {
+      "name": "tasks",
+      "key_properties": [
+        "WorkItemId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": ["CreationDate"],
+      "path": "collectionStrategies/{StrategyId}/child/strategyExecutionTasks",
+      "data_key": "items",
+      "parent": "collection_strategies",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-collectionstrategies-strategyid-child-strategyexecutiontasks-get.html"
+    },
+    {
+      "name": "currency_rates",
+      "key_properties": [],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "currencyRates",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-currencyrates-get.html"
+    },
+    {
+      "name": "data_securities",
+      "key_properties": [
+        "UserRoleDataAssignmentId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "dataSecurities",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-datasecurities-get.html"
+    },
+    {
+      "name": "debit_authorizations",
+      "key_properties": [
+        "DebitAuthorizationReferenceNumber"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "debitAuthorizations",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-debitauthorizations-get.html"
+    },
+    {
+      "name": "erpintegrations",
+      "key_properties": [],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "erpintegrations",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-erpintegrations-get.html"
+    },
+    {
+      "name": "expenses",
+      "key_properties": [
+        "ExpenseId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "expenses",
+      "data_key": "items",
+      "parent": "",
+      "children":["expenses_attachments"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-expenses-get.html"
+    },
+    {
+      "name": "expenses_attachments",
+      "key_properties": [
+        "AttachedDocumentId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "expenses/{expensesUniqID}/child/Attachments",
+      "data_key": "items",
+      "parent": "expenses",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-expenses-expensesuniqid-child-attachments-get.html"
+    },
+    {
+      "name": "external_bank_accounts",
+      "key_properties": [
+        "BankAccountNumber"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "externalBankAccounts",
+      "data_key": "items",
+      "parent": "",
+      "children":["account_owners"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-externalbankaccounts-get.html"
+    },
+    {
+      "name": "account_owners",
+      "key_properties": [
+        "AccountOwnerId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "externalBankAccounts/{BankAccountId}/child/accountOwners",
+      "data_key": "items",
+      "parent": "external_bank_accounts",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-externalbankaccounts-bankaccountid-child-accountowners-get.html"
+    },
+    {
+      "name": "fed_groups",
+      "key_properties": [
+        "LedgerGroupId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": ["CreationDate"],
+      "path": "fedGroups",
+      "data_key": "items",
+      "parent": "",
+      "children": ["fed_group_budget_levels"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-fedgroups-get.html"
+    },
+    {
+      "name": "fed_group_budget_levels",
+      "key_properties": [
+        "GroupBeLevelId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": ["CreationDate"],
+      "path": "fedGroups/{LedgerGroupId}/child/fedGroupBudgetLevels",
+      "data_key": "items",
+      "parent": "fed_groups",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-fedgroups-ledgergroupid-child-fedgroupbudgetlevels-get.html"
+    },
+    {
+      "name": "invoices",
+      "key_properties": [
+        "InvoiceId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "invoices",
+      "data_key": "items",
+      "parent": "",
+      "children": ["invoice"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-invoices-get.html"
+    },
+    {
+      "name": "invoice",
+      "key_properties": [
+        "InvoiceId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "invoice",
+      "data_key": "items",
+      "parent": "invoices",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-invoices-invoicesuniqid-get.html"
+    },
+    {
+      "name": "joint_ventures",
+      "key_properties": [
+        "jointVentureId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "jointVentures",
+      "data_key": "items",
+      "parent": "",
+      "children": [
+        "messages", "stakeholders"
+      ],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-jointventures-get.html"
+    },
+    {
+      "name": "messages",
+      "key_properties": [],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "jointVentures/{jointVentureId}/child/messages",
+      "data_key": "items",
+      "parent": "joint_ventures",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-jointventures-jointventureid-child-messages-get.html"
+    },
+    {
+      "name": "stakeholders",
+      "key_properties": [
+        "stakeholderId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "jointVentures/{jointVentureId}/child/stakeholders",
+      "data_key": "items",
+      "parent": "joint_ventures",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-jointventures-jointventureid-child-stakeholders-get.html"
+    },
+    {
+      "name": "payables_payments",
+      "key_properties": [
+        "PaymentId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "payablesPayments",
+      "data_key": "items",
+      "parent": "",
+      "children": ["related_invoices"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-payablespayments-get.html"
+    },
+    {
+      "name": "related_invoices",
+      "key_properties": [
+        "InvoicePaymentId"
+      ],
+      "replication_method": "INCREMENTAL",
+      "replication_keys": [
+        "CreationDate"
+      ],
+      "path": "relatedInvoices",
+      "data_key": "items",
+      "parent": "payables_payments",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-payablespayments-checkid-child-relatedinvoices-get.html"
+    },
+    {
+      "name": "receivables_invoices",
+      "key_properties": [
+        "CustomerTransactionId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "receivablesInvoices",
+      "data_key": "items",
+      "parent": "",
+      "children": ["attachments", "notes"],
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-receivablesinvoices-get.html"
+    },
+    {
+      "name": "attachments",
+      "key_properties": [],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "receivablesInvoices/{CustomerTransactionId}/child/attachments",
+      "data_key": "items",
+      "parent": "receivables_invoices",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-receivablesinvoices-customertransactionid-child-attachments-get.html"
+    },
+    {
+      "name": "notes",
+      "key_properties": [],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "receivablesInvoices/{CustomerTransactionId}/child/notes",
+      "data_key": "items",
+      "parent": "receivables_invoices",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-receivablesinvoices-customertransactionid-child-notes-get.html"
+    },
+    {
+      "name": "tax_exemptions",
+      "key_properties": [
+        "TaxExemptionId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "taxExemptions",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-taxexemptions-get.html"
+    },
+    {
+      "name": "tax_registrations",
+      "key_properties": [
+        "RegistrationId"
+      ],
+      "replication_method": "FULL_TABLE",
+      "replication_keys": null,
+      "path": "taxRegistrations",
+      "data_key": "items",
+      "parent": "",
+      "doc_link": "https://docs.oracle.com/en/cloud/saas/financials/25c/farfa/op-taxregistrations-get.html"
+    }
+  ],
+  "tap_tester_creds": {
+    "client_id": "TAP_ORACLE_FUSION_CLIENT_ID",
+    "client_secret": "TAP_ORACLE_FUSION_CLIENT_SECRET",
+    "refresh_token": "TAP_ORACLE_FUSION_REFRESH_TOKEN",
+    "profiles": "TAP_ORACLE_FUSION_PROFILES"
+  },
+  "author": "Stitch",
+  "third_party_dependencies": [
+    "singer-python==6.1.1",
+    "requests==2.32.4",
+    "backoff==2.2.1"
+  ]
+}
