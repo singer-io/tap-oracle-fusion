@@ -18,7 +18,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "DocumentNumber": {
       "type": [
@@ -37,7 +37,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "TaxAuthorityDocumentNumber": {
       "type": [
@@ -75,7 +75,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "CancelReason": {
       "type": [

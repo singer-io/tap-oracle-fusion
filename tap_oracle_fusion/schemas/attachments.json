@@ -24,8 +24,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "byte"
+      ]
     },
     "Uri": {
       "type": [
@@ -151,8 +150,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "byte"
+      ]
     },
     "ExpirationDate": {
       "type": [

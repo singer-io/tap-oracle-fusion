@@ -24,7 +24,7 @@
         "string",
         "null"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ConversionRate": {
       "type": [

@@ -18,28 +18,28 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ScheduleEnd": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ExecutionStart": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ExecutionEnd": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "PostWaitEndTime": {
       "type": [

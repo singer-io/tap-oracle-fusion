@@ -78,14 +78,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "EffectiveTo": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "LegalRegistrationAddress": {
       "type": [
