@@ -117,8 +117,7 @@
             "type": [
               "null",
               "string"
-            ],
-            "format": "uri"
+            ]
           }
         },
         "required": [
@@ -587,8 +586,7 @@
             "type": [
               "null",
               "string"
-            ],
-            "format": "uri"
+            ]
           },
           "name": {
             "type": [

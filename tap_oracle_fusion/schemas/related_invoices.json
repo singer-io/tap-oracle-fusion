@@ -129,8 +129,7 @@
             "type": "string"
           },
           "href": {
-            "type": "string",
-            "format": "uri"
+            "type": "string"
           },
           "name": {
             "type": "string"
