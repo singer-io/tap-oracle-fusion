@@ -132,6 +132,9 @@ class BaseStream(ABC):
         """
         Update params for the stream
         """
+        self.params.update({
+            "?limit=": self.page_size
+            })
         self.params.update(kwargs)
 
     def update_data_payload(self, **kwargs) -> None:
@@ -231,6 +234,7 @@ class FullTableStream(BaseStream):
         """Abstract implementation for `type: Fulltable` stream."""
         self.url_endpoint = self.get_url_endpoint(parent_obj)
         self.update_data_payload(parent_obj)
+        self.update_params()
         with metrics.record_counter(self.tap_stream_id) as counter:
             for record in self.get_records():
                 transformed_record = transformer.transform(

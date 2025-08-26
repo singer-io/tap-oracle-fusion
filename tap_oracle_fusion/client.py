@@ -1,6 +1,7 @@
 from typing import Any, Dict, Mapping, Optional, Tuple
+from datetime import datetime, timedelta
 
-import backoff
+import backoff, time
 import requests
 from requests import session
 from requests.exceptions import Timeout, ConnectionError, ChunkedEncodingError
@@ -10,6 +11,7 @@ from tap_oracle_fusion.exceptions import ERROR_CODE_EXCEPTION_MAPPING, OracleFus
 
 LOGGER = get_logger()
 REQUEST_TIMEOUT = 300
+ACCESS_URL = "https://{server}.identity.oraclecloud.com/oauth2/v1/token"
 
 def raise_for_error(response: requests.Response) -> None:
     """Raises the associated response exception. Takes in a response object,
@@ -34,6 +36,15 @@ def raise_for_error(response: requests.Response) -> None:
             "raise_exception", OracleFusionError
         )
         raise exc(message, response) from None
+    
+def wait_if_retry_after(details):
+    """Backoff handler that checks for a 'retry_after' attribute in the exception
+    and sleeps for the specified duration to respect API rate limits.
+    """
+    exc = details['exception']
+    if hasattr(exc, 'retry_after') and exc.retry_after is not None:
+        time.sleep(exc.retry_after)  # Force exact wait
+
 
 class Client:
     """
@@ -48,24 +59,61 @@ class Client:
     def __init__(self, config: Mapping[str, Any]) -> None:
         self.config = config
         self._session = session()
-        self.base_url = "https://{instance}.fa.{region}.oraclecloud.com"
+        self.instance = config.get("instance")
+        self.region = config.get("region")
+        self.base_url = "https://{self.instance}.fa.{self.region}.oraclecloud.com"
         config_request_timeout = config.get("request_timeout")
         self.request_timeout = float(config_request_timeout) if config_request_timeout else REQUEST_TIMEOUT
 
     def __enter__(self):
-        self.check_api_credentials()
+        self._get_access_token()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         self._session.close()
 
-    def check_api_credentials(self) -> None:
-        pass
+    def _get_access_token(self) -> None:
+        """Fetches a new oracle fusion token using client credentials flow."""
+        LOGGER.info("Requesting new access token from Microsoft Graph")
+
+        token_url = ACCESS_URL.format(self.config["server"])
+
+        resp_json = self.make_request(
+            method="POST",
+            endpoint=token_url,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body={
+                "client_id": self.config["client_id"],
+                "client_secret": self.config["client_secret"],
+                "scope": self.config["scope"],
+                "grant_type": self.config["grant_type"]
+            },
+            is_auth_req=False
+        )
+
+        self._access_token = resp_json["access_token"]
+        expires_in_seconds = int(resp_json.get("expires_in", 3600))
+        self._expires_at = datetime.now() + timedelta(seconds=expires_in_seconds)
+
+        LOGGER.info("Received new access token, valid for %s seconds", expires_in_seconds)
+
 
     def authenticate(self, headers: Dict, params: Dict) -> Tuple[Dict, Dict]:
-        """Authenticates the request with the token"""
-        headers["Authorization"] = self.config["access_token"]
+        """Authenticates the request with the token, refreshing it if expired."""
+        if datetime.now() >= self._expires_at:
+            LOGGER.info("Access token expired. Refreshing...")
+            self._get_access_token()
+        headers["Authorization"] = self._access_token
         return headers, params
+    
+    def get(self, endpoint: str, params: Dict, headers: Dict, path: str = None) -> Any:
+        """Calls the make_request method with a prefixed method type `GET`"""
+        endpoint = endpoint or f"{self.base_url}/{path}"
+        headers, params = self.authenticate(headers, params)
+        return self.__make_request("GET", endpoint, headers=headers, params=params, timeout=self.request_timeout)
+
 
     def make_request(
         self,
@@ -93,7 +141,8 @@ class Client:
         )
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
+        wait_gen=lambda: backoff.expo(factor=2),
+        on_backoff=wait_if_retry_after,
         exception=(
             ConnectionResetError,
             ConnectionError,
@@ -102,7 +151,6 @@ class Client:
             OracleFusionBackoffError
         ),
         max_tries=5,
-        factor=2,
     )
     def __make_request(
         self, method: str, endpoint: str, **kwargs
