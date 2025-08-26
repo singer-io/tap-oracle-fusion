@@ -90,14 +90,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "EffectiveTo": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ExemptCertificateNumber": {
       "type": [
@@ -110,14 +110,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "IssueDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ExemptionTypeCode": {
       "type": [
@@ -154,14 +154,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "SuspendToDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "LimitAmount": {
       "type": [

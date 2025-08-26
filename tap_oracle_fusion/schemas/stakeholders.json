@@ -97,8 +97,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "email"
+      ]
     },
     "partyPhone": {
       "type": [
