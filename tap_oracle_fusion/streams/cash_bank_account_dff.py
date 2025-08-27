@@ -7,7 +7,7 @@ class CashBankAccountDff(FullTableStream):
     replication_method = "FULL_TABLE"
     data_key = "items"
     path = "cashBankAccounts/{BankAccountId}/child/cashBankAccountDFF"
-    path = "bank_accounts"
+    parent = "bank_accounts"
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:
