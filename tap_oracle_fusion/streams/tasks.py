@@ -13,7 +13,7 @@ class Tasks(ChildBaseStream):
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:
-        """Constructs the API endpoint URL for fetching directory role member for a given StrategyId."""
+        """Constructs the API endpoint URL for fetching tasks for a given StrategyId."""
         if not parent_obj or 'StrategyId' not in parent_obj:
             raise ValueError("parent_obj must be provided with an 'StrategyId' key.")
         return f"{self.client.base_url}/{self.path.format(StrategyId = parent_obj['StrategyId'])}"
