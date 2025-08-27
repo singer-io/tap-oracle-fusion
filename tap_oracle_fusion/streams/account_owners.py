@@ -11,7 +11,7 @@ class AccountOwners(FullTableStream):
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:
-        """Constructs the API endpoint URL for fetching account owners for a given account number."""
-        if not parent_obj or 'BankAccountNumber' not in parent_obj:
-            raise ValueError("parent_obj must be provided with an 'BankAccountNumber' key.")
-        return f"{self.client.base_url}/{self.path.format(BankAccountId = parent_obj['BankAccountNumber'])}"
+        """Constructs the API endpoint URL for fetching account owners for a given bank account ID."""
+        if not parent_obj or 'BankAccountId' not in parent_obj:
+            raise ValueError("parent_obj must be provided with a 'BankAccountId' key.")
+        return f"{self.client.base_url}/{self.path.format(BankAccountId = parent_obj['BankAccountId'])}"
