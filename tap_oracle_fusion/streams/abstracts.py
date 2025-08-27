@@ -132,8 +132,7 @@ class BaseStream(ABC):
         """
         Update params for the stream
         """
-        self.params.update({
-            "?limit=": self.page_size
+            "limit": self.page_size
             })
         self.params.update(kwargs)
 
