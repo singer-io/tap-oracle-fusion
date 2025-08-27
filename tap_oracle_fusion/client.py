@@ -61,7 +61,7 @@ class Client:
         self._session = session()
         self.instance = config.get("instance")
         self.region = config.get("region")
-        self.base_url = "https://{self.instance}.fa.{self.region}.oraclecloud.com"
+        self.base_url = f"https://{self.instance}.fa.{self.region}.oraclecloud.com"
         config_request_timeout = config.get("request_timeout")
         self.request_timeout = float(config_request_timeout) if config_request_timeout else REQUEST_TIMEOUT
 
