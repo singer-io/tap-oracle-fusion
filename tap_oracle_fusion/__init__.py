@@ -7,7 +7,7 @@ from tap_oracle_fusion.sync import sync
 
 LOGGER = singer.get_logger()
 
-REQUIRED_CONFIG_KEYS = ['client_id', 'client_secret', 'start_date', 'grant_type', 'scope', 'region', 'region']
+REQUIRED_CONFIG_KEYS = ['client_id', 'client_secret', 'start_date', 'grant_type', 'scope', 'server', 'region', "instance"]
 
 def do_discover():
     """
