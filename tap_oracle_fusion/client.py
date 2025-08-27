@@ -141,7 +141,7 @@ class Client:
         )
 
     @backoff.on_exception(
-        wait_gen=lambda: backoff.expo(factor=2),
+        wait_gen=backoff.expo(factor=2),
         on_backoff=wait_if_retry_after,
         exception=(
             ConnectionResetError,
