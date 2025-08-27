@@ -74,7 +74,7 @@ class Client:
 
     def _get_access_token(self) -> None:
         """Fetches a new oracle fusion token using client credentials flow."""
-        LOGGER.info("Requesting new access token from Microsoft Graph")
+        LOGGER.info("Requesting new access token from Oracle Fusion")
 
         token_url = ACCESS_URL.format(self.config["server"])
 
