@@ -12,14 +12,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ConversionDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ConversionRate": {
       "type": [
@@ -62,7 +62,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "TransactionType": {
       "type": [
@@ -129,7 +129,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "PurchaseOrderRevision": {
       "type": [
@@ -172,7 +172,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "BillToPartyId": {
       "type": [
@@ -197,7 +197,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ShipToSite": {
       "type": [
@@ -240,7 +240,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ShippingReference": {
       "type": [
