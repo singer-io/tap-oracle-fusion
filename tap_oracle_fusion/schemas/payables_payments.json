@@ -54,14 +54,14 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "AccountingDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "PaymentDescription": {
       "type": [
@@ -80,7 +80,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ConversionRateType": {
       "type": [
@@ -93,7 +93,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ClearingAmount": {
       "type": [
@@ -118,7 +118,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ClearingConversionRateType": {
       "type": [
@@ -137,7 +137,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "MaturityConversionRateType": {
       "type": [
@@ -150,7 +150,7 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "MaturityConversionRate": {
       "type": [
@@ -163,35 +163,35 @@
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "ClearingValueDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "StopDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "VoidDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "VoidAccountingDate": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date"
+      "format": "date-time"
     },
     "PaymentStatus": {
       "type": [
@@ -483,8 +483,7 @@
             "type": "string"
           },
           "href": {
-            "type": "string",
-            "format": "uri"
+            "type": "string"
           },
           "name": {
             "type": "string"

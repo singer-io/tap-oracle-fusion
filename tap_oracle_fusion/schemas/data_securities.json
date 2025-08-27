@@ -67,8 +67,7 @@
             "type": [
               "null",
               "string"
-            ],
-            "format": "uri"
+            ]
           },
           "name": {
             "type": [
