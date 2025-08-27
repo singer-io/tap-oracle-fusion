@@ -132,8 +132,7 @@ class BaseStream(ABC):
         """
         Update params for the stream
         """
-            "limit": self.page_size
-            })
+        self.params.update({"limit": self.page_size})
         self.params.update(kwargs)
 
     def update_data_payload(self, **kwargs) -> None:
