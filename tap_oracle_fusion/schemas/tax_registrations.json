@@ -1,1 +1,306 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "PartyTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartySiteNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxRegimeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Tax": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxJurisdictionCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxPointBasis": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RegistrationTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RegistrationStatusCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RepresentativePartyTaxName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RegistrationReasonCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EffectiveFrom": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "EffectiveTo": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LegalRegistrationAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationLevel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationRule": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RegistrationNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RegistrationSourceCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "IssuingTaxAuthority": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DefaultRegistrationFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "RoundingRuleCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InclusiveTaxFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "BankAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxClassificationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UniquenessValidationLevel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Country": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyCountryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankBranchId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "BankId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CollTaxAuthorityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "LegalLocationId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PartyTaxProfileId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "RoundingLevelCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxAuthorityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "RegistrationId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PartyTaxAllowOffsetTaxFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyTaxRoundingLevelCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxInclusiveTaxFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyTaxClassificationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxRoundingRuleCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxProcessForApplicabilityFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "CountryCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

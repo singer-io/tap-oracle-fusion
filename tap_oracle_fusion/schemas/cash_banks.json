@@ -1,19 +1,43 @@
 {
   "type": "object",
   "properties": {
-    "CashPoolMemberId": {
+    "BankPartyId": {
       "type": "number"
     },
-    "CashPoolMinimumPaymentAmount": {
+    "BankName": {
       "type": [
         "null",
-        "number"
+        "string"
       ]
     },
-    "CashPoolMinimumReceiptAmount": {
+    "BankNameAlt": {
       "type": [
         "null",
-        "number"
+        "string"
+      ]
+    },
+    "BankNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxpayerIdNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxRegistrationNumber": {
+      "type": [
+        "null",
+        "string"
       ]
     },
     "CreatedBy": {
@@ -29,12 +53,6 @@
       ],
       "format": "date-time"
     },
-    "LastUpdatedBy": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "LastUpdateDate": {
       "type": [
         "null",
@@ -48,19 +66,19 @@
         "string"
       ]
     },
-    "SubAccountType": {
+    "LastUpdatedBy": {
       "type": [
         "null",
         "string"
       ]
     },
-    "SubBankAccountName": {
+    "BankPartyNumber": {
       "type": [
         "null",
         "string"
       ]
     },
-    "SubCashPoolName": {
+    "CountryName": {
       "type": [
         "null",
         "string"

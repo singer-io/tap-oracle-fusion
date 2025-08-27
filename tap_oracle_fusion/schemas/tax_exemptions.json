@@ -1,1 +1,388 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "PartyTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartySiteNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExemptionUsageCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxRegimeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ContentOwner": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Tax": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxStatusCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxRateCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxJurisdictionCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ItemNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Organization": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EffectiveFrom": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "EffectiveTo": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ExemptCertificateNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RecordingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "IssueDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ExemptionTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RateModifier": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ExemptionStatusCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "IssuingTaxAuthority": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ApplyToLowerLevelsFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "SuspendFromDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "SuspendToDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LimitAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ExemptReasonCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ClauseReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "IssueFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyTypeFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PrintFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyUsage": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Country": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ContentOwnerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CustomerAccountId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CustomChargeFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "DetFactorTemplCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InventoryOrgId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "IssuingTaxAuthorityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "PartyTaxProfileId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ProductId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "RecordTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SiteUseId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "TaxJurisdictionId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "TaxExemptionId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ReportingTypeId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ReportingCodeId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ReportingTypeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReportingCodeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReportingCodeChar": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxAllowOffsetTaxFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyTaxRoundingLevelCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxInclusiveTaxFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PartyTaxClassificationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxRoundingRuleCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyTaxProcessForApplicabilityFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

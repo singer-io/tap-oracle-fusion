@@ -1,1 +1,496 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "CustomerTransactionId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "DueDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ConversionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ConversionRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "InvoiceCurrencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SpecialInstructions": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CrossReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TransactionNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TransactionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "TransactionType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TransactionSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BillToCustomerNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BillToSite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Comments": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InternalNotes": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentTerms": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LegalEntityIdentifier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PurchaseOrder": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PurchaseOrderDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "PurchaseOrderRevision": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FirstPartyRegistrationNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ThirdPartyRegistrationNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoicingRule": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ShipToCustomerName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ShipToCustomerNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BillingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "BillToPartyId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "BusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ShipToSite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PayingCustomerName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PayingCustomerSite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BillToCustomerName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FreightAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "Carrier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ShipDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ShippingReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BillToContact": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ShipToContact": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PrintOption": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "PayingCustomerAccount": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SoldToPartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RemitToAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DefaultTaxationCountry": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "EnteredAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "InvoiceBalanceAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "Prepayment": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Intercompany": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentFiscalClassification": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankAccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardAuthorizationRequestIdentifier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardExpirationDate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardIssuerCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardTokenNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardVoiceAuthorizationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardErrorCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreditCardErrorText": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CardHolderLastName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CardHolderFirstName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReceiptMethod": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SalesPersonNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "StructuredPaymentReference": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoicePrinted": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastPrintDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "OriginalPrintDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "DeliveryMethod": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Email": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AllowCompletion": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ControlCompletionReason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

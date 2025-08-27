@@ -1,1 +1,131 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "StrategyId": {
+      "type": "number"
+    },
+    "Score": {
+      "type": "number"
+    },
+    "AccountNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SiteUse": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NextStrategyTask": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "StrategyStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "StrategyTemplate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

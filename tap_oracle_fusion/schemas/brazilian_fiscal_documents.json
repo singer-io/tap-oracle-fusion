@@ -1,1 +1,142 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "Status": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FiscalDocumentKey": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FiscalDocumentDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "DocumentNumber": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "VoidReason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VoidDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "TaxAuthorityDocumentNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceVerificationCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TemporaryServiceDocumentNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ProtocolNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ProcessedDateTime": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "TaxSettlementDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CancelReason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentRelationId": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,1 +1,119 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "LedgerGroupId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "FederalGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "NaturalAccountValueSet": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FreezeBudgetLevel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

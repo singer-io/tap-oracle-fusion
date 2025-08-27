@@ -1,1 +1,145 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "InvoicePaymentId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "CheckId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "InvoiceId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "InvoiceBusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InstallmentNumber": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "AmountPaidPaymentCurrency": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "AmountPaidInvoiceCurrency": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "DiscountLost": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "DiscountTaken": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "InvoiceBaseAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "PaymentBaseAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "InvoiceCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CrossCurrencyRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

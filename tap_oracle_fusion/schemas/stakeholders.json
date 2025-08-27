@@ -1,1 +1,115 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "costCenterSegmentValue": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "invoicingPartnerName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "createdBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "creationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "internalStakeholderFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "lastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "lastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stakeholderDescription": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stakeholderId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "stakeholderShortName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stakeholderStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stakeholderTypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "partyNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "distributionOnlyFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "partyAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "partyEmail": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "partyPhone": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "partyName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

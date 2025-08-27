@@ -1,1 +1,200 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FileName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FileWebImage": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Uri": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Url": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DmDocumentId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AttachedDocumentId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "UploadedFileContentType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DownloadInfo": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedByUserName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UploadedFileLength": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "DmVersionNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ErrorStatusMessage": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UserName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DatatypeCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PostProcessingAction": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Title": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdatedByUserName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UploadedFileName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FileUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ContentRepositoryFileShared": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "FileContents": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ExpirationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ErrorStatusCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DmFolderPath": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UploadedText": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CategoryName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "AsyncTrackerId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

@@ -1,1 +1,651 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "jointVentureId": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "jointVentureShortName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "jointVentureDescription": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "jointVentureStatus": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "approvedFlag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "approvedDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "chartOfAccountsInstanceName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "transactionsExistFlag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "createdBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "creationDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "lastUpdatedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lastUpdateDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "segment1Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment2Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment3Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment4Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment5Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment6Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment7Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment8Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment9Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment10Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment11Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment12Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment13Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment14Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment15Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment16Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment17Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment18Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment19Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment20Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment21Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment22Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment23Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment24Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment25Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment26Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment27Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment28Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment29Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment30Flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segment1ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment2ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment3ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment4ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment5ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment6ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment7ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment8ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment9ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment10ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment11ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment12ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment13ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment14ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment15ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment16ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment17ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment18ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment19ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment20ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment21ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment22ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment23ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment24ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment25ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment26ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment27ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment28ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment29ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment30ValueSetCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment1Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment2Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment3Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment4Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment5Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment6Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment7Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment8Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment9Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment10Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment11Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment12Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment13Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment14Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment15Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment16Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment17Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment18Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment19Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment20Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment21Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment22Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment23Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment24Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment25Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment26Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment27Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment28Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment29Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "segment30Label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "defaultOwnershipDefinitionName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "businessUnitName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "costCenterSegment": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "structureInstanceNumber": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "defaultLedger": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,1 +1,141 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "WorkItemId": {
+      "type": "number"
+    },
+    "WorkOrder": {
+      "type": "number"
+    },
+    "StrategyTaskTemplate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ScheduleStart": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ScheduleEnd": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ExecutionStart": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ExecutionEnd": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "PostWaitEndTime": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaskType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AssignedTo": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaskStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "changeIndicator": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

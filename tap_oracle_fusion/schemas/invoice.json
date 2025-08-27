@@ -1,1 +1,868 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "AccountCodingStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AccountingDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "AccountingStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "AmountPaid": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "appliedPrepayments": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "PrepaymentId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "PrepaymentAmount": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "AppliedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "PrepaymentId",
+          "PrepaymentAmount"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "ApplyAfterDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ApprovalStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "attachments": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "AttachmentId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "FileName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "FileType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "UploadedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "URL": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "AttachmentId",
+          "FileName"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "availablePrepayments": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "PrepaymentId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "AvailableAmount": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "Currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "PrepaymentId",
+          "AvailableAmount"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "BankAccount": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BankChargeBearer": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "BaseAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "BudgetDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "BusinessUnit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CanceledBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CanceledDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "CanceledFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "ControlAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ConversionDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ConversionRate": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "ConversionRateType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "CreationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "DeliveryChannel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DeliveryChannelCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentCategory": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentFiscalClassificationCodePath": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "DocumentSequence": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ExternalBankAccountId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "FirstPartyTaxRegistrationId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "FirstPartyTaxRegistrationNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "FundsStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "GoodsReceivedDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "ImageDocumentNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceAmount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "InvoiceCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "invoiceDff": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "AttributeName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "AttributeValue": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "invoiceGdf": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "GroupName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "GroupValue": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "InvoiceGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "invoiceInstallments": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "InstallmentNumber": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "DueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "Amount": {
+            "type": [
+              "null",
+              "number"
+            ]
+          }
+        },
+        "required": [
+          "InstallmentNumber",
+          "Amount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "invoiceLines": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "InvoiceLineId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "LineNumber": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Amount": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "Quantity": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "UnitPrice": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "TaxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "AccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "InvoiceLineId",
+          "Amount"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "InvoiceNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceReceivedDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "InvoiceSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceSourceCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "InvoiceType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "LastUpdatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LastUpdateLogin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LegalEntity": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LegalEntityIdentifier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "LiabilityDistribution": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "PaidStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Party": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PartySite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PayAloneFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "PayGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentCurrency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentMethod": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentMethodCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentReason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentReasonCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentReasonComments": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PaymentTerms": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ProcurementBU": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ProductTable": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "PurchaseOrderNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceKeyFive": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceKeyFour": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceKeyOne": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceKeyThree": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ReferenceKeyTwo": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RemittanceMessageOne": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RemittanceMessageThree": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RemittanceMessageTwo": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Requester": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RequesterId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "RoutingAttribute1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RoutingAttribute2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RoutingAttribute3": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RoutingAttribute4": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RoutingAttribute5": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SettlementPriority": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Supplier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SupplierIBAN": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SupplierNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SupplierSite": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SupplierTaxRegistrationNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TaxationCountry": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "TermsDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date"
+    },
+    "UniqueRemittanceIdentifier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UniqueRemittanceIdentifierCheckDigit": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ValidationStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "VoucherNumber": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

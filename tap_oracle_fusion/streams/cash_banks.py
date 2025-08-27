@@ -1,7 +1,7 @@
 from tap_oracle_fusion.streams.abstracts import IncrementalStream
 
-class Cashbanks(IncrementalStream):
-    tap_stream_id = "cashBanks"
+class CashBanks(IncrementalStream):
+    tap_stream_id = "cash_banks"
     key_properties = ["BankPartyId"]
     replication_method = "INCREMENTAL"
     replication_keys = ["CreationDate"]

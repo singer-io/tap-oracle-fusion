@@ -1,1 +1,88 @@
-{}
+{
+  "type": "object",
+  "properties": {
+    "ActiveFlag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "UserRoleDataAssignmentId": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "Rolerf": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Userrf": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SecurityContext": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "SecurityContextValue": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "UserName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "RoleNameCr": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "links": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "href": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
