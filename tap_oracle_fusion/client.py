@@ -61,7 +61,7 @@ class Client:
         self._session = session()
         self.instance = config.get("instance")
         self.region = config.get("region")
-        self.base_url = "https://{self.instance}.fa.{self.region}.oraclecloud.com"
+        self.base_url = f"https://{self.instance}.fa.{self.region}.oraclecloud.com"
         config_request_timeout = config.get("request_timeout")
         self.request_timeout = float(config_request_timeout) if config_request_timeout else REQUEST_TIMEOUT
 
@@ -74,7 +74,7 @@ class Client:
 
     def _get_access_token(self) -> None:
         """Fetches a new oracle fusion token using client credentials flow."""
-        LOGGER.info("Requesting new access token from Microsoft Graph")
+        LOGGER.info("Requesting new access token from Oracle Fusion")
 
         token_url = ACCESS_URL.format(self.config["server"])
 
