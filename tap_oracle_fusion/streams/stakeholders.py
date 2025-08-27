@@ -16,6 +16,6 @@ class Stakeholders(ChildBaseStream):
         """Constructs the API endpoint URL for fetching stakeholders for a given jointVentureId."""
         if not parent_obj or 'jointVentureId' not in parent_obj:
             raise ValueError("parent_obj must be provided with an 'jointVentureId' key.")
-        return f"{self.client.base_url}/{self.path.format(role_id = parent_obj['jointVentureId'])}"
+        return f"{self.client.base_url}/{self.path.format(jointVentureId = parent_obj['jointVentureId'])}"
 
 
