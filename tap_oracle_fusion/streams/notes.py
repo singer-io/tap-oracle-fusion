@@ -7,7 +7,7 @@ class Notes(FullTableStream):
     replication_method = "FULL_TABLE"
     data_key = "items"
     path = "receivablesInvoices/{CustomerTransactionId}/child/notes"
-    path = "receivables_invoices"
+    parent = "receivables_invoices"
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:

@@ -7,7 +7,7 @@ class ExpensesAttachments(FullTableStream):
     replication_method = "FULL_TABLE"
     data_key = "items"
     path = "expenses/{expensesUniqID}/child/Attachments"
-    path = "expenses"
+    parent = "expenses"
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:
