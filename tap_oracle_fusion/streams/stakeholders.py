@@ -1,4 +1,5 @@
 from tap_oracle_fusion.streams.abstracts import ChildBaseStream
+from typing import Dict
 
 class Stakeholders(ChildBaseStream):
     tap_stream_id = "stakeholders"
@@ -9,4 +10,12 @@ class Stakeholders(ChildBaseStream):
     path = "jointVentures/{jointVentureId}/child/stakeholders"
     parent = "joint_ventures"
     bookmark_value = None
+    
+    
+    def get_url_endpoint(self, parent_obj: Dict = None) -> str:
+        """Constructs the API endpoint URL for fetching stakeholders for a given jointVentureId."""
+        if not parent_obj or 'jointVentureId' not in parent_obj:
+            raise ValueError("parent_obj must be provided with an 'jointVentureId' key.")
+        return f"{self.client.base_url}/{self.path.format(jointVentureId = parent_obj['jointVentureId'])}"
+
 
