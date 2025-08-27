@@ -13,7 +13,7 @@ class RelatedInvoices(ChildBaseStream):
     
     
     def get_url_endpoint(self, parent_obj: Dict = None) -> str:
-        """Constructs the API endpoint URL for fetching directory role member for a given role."""
+        """Constructs the API endpoint URL for fetching related invoices for a given CheckId."""
         if not parent_obj or 'CheckId' not in parent_obj:
             raise ValueError("parent_obj must be provided with an 'CheckId' key.")
         return f"{self.client.base_url}/{self.path.format(CheckId = parent_obj['CheckId'])}"
