@@ -71,6 +71,112 @@ def oracle_attribute_to_property_schema(attribute: Mapping[str, Any]) -> Dict[st
     return schema
 
 
+def _coerce_attribute_payload(entry: Any) -> List[Mapping[str, Any]]:
+    if not isinstance(entry, Mapping):
+        return []
+
+    for key in ("attributes", "columns", "fields", "datastoreColumns"):
+        values = entry.get(key)
+        if isinstance(values, list):
+            return [value for value in values if isinstance(value, Mapping)]
+
+    return []
+
+
+def _attribute_name(attribute: Mapping[str, Any]) -> Optional[str]:
+    for key in ("name", "columnName", "attributeName", "fieldName"):
+        value = attribute.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _attribute_type(attribute: Mapping[str, Any]) -> str:
+    for key in ("type", "dataType", "columnType"):
+        value = attribute.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return "string"
+
+
+def infer_bicc_primary_keys(attributes: Iterable[Mapping[str, Any]]) -> List[str]:
+    primary_keys: List[str] = []
+    seen = set()
+
+    for attribute in attributes:
+        name = _attribute_name(attribute)
+        if not name:
+            continue
+        if bool(attribute.get("isPrimaryKey")) and name not in seen:
+            primary_keys.append(name)
+            seen.add(name)
+
+    return primary_keys
+
+
+def infer_bicc_replication_key(attributes: Iterable[Mapping[str, Any]]) -> Optional[str]:
+    for attribute in attributes:
+        name = _attribute_name(attribute)
+        if name and bool(attribute.get("isLastUpdateDate")):
+            return name
+
+    for attribute in attributes:
+        name = _attribute_name(attribute)
+        if name and bool(attribute.get("isCreationDate")):
+            return name
+
+    return None
+
+
+def build_bicc_schema(detail_payload: Any) -> Dict[str, Any]:
+    """Build JSON schema from BICC datastore detail payload."""
+    properties: Dict[str, Any] = {}
+    for attribute in _coerce_attribute_payload(detail_payload):
+        attr_name = _attribute_name(attribute)
+        if not attr_name:
+            continue
+
+        properties[attr_name] = oracle_attribute_to_property_schema(
+            {"name": attr_name, "type": _attribute_type(attribute)}
+        )
+
+    schema: Dict[str, Any] = {"type": "object", "properties": properties}
+    if not properties:
+        schema["additionalProperties"] = True
+    return schema
+
+
+def build_bicc_schema_and_metadata(
+    detail_payload: Any,
+    oracle_path: str,
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[str]]:
+    """Build Singer schema and metadata for a BICC datastore detail payload."""
+    attributes = _coerce_attribute_payload(detail_payload)
+    schema_dict = build_bicc_schema(detail_payload)
+    primary_keys = infer_bicc_primary_keys(attributes)
+    replication_key = infer_bicc_replication_key(attributes)
+
+    primary_key = primary_keys[0] if primary_keys else None
+    replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
+    mdata = metadata.get_standard_metadata(
+        schema=schema_dict,
+        key_properties=[primary_key] if primary_key else [],
+        valid_replication_keys=[replication_key] if replication_key else [],
+        replication_method=replication_method,
+    )
+
+    mdata_map = metadata.to_map(mdata)
+    if replication_key:
+        mdata_map = metadata.write(
+            mdata_map,
+            ("properties", replication_key),
+            "inclusion",
+            "automatic",
+        )
+    mdata_map = metadata.write(mdata_map, (), "oracle-path", oracle_path)
+    return schema_dict, metadata.to_list(mdata_map), primary_keys
+
+
 def _extract_attributes(describe_payload: Mapping[str, Any], resource_name: str) -> List[Mapping[str, Any]]:
     resources_obj = describe_payload.get("Resources", {})
     if isinstance(resources_obj, Mapping):

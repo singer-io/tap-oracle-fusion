@@ -1,14 +1,13 @@
 # tap-oracle-fusion
 
-Dynamic Singer tap for Oracle Fusion REST APIs.
+Dynamic Singer tap for Oracle Fusion BICC datastores.
 
 ## Features
 
-- Dynamic stream discovery from Oracle resource metadata
+- Dynamic stream discovery from BICC datastore metadata
+- Snake-case stream normalization for discovered datastores
 - Dynamic schema and Singer metadata generation
-- Optional sample-based type enrichment for schema generation
-- Incremental sync when replication key is detected
-- Full table sync fallback when no replication key is available
+- Discovery supports string-only datastore payloads and structured datastore payloads
 
 ## Config
 
@@ -22,8 +21,10 @@ Required keys:
 
 Important optional keys:
 
-- api_families: list, default ["hcm", "fscm"]
-- api_version: default "11.13.18.05"
+- datastores (or streams/resources): list of datastore names to include during discovery
+- discovery_parents: list of top-level datastore parents to include during discovery (for example: `FscmTopModelAM`, `CrmAnalyticsAM`). If set with `datastores`, both filters are applied.
+- discovery_limit: integer cap for number of datastores to process during discovery (useful for validation runs)
+- discovery_workers (or discovery_threads): number of concurrent workers for datastore detail discovery (`auto` or integer, default: auto, max: 128)
 - page_size: number of records to fetch per page (default: 100)
 
 ## Usage
@@ -42,19 +43,13 @@ tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 
 ## API calls used by discovery
 
-Per family/version:
-
-- GET /{family}RestApi/resources/{version}
-
-Per resource:
-
-- GET /{family}RestApi/resources/{version}/{resource}/describe
-- Optional sample call for schema enrichment:
-	GET /{family}RestApi/resources/{version}/{resource}?limit={n}&offset=0
+- GET /biacm/rest/meta/datastores
+- GET /biacm/rest/meta/datastores/{datastoreName} (for column metadata)
+- Each discovered stream stores its datastore path in stream metadata (`oracle-path`)
 
 ## API calls used by sync
 
 Per selected stream:
 
-- Resolve stream-to-resource path from current discovery config
+- Resolve stream-to-datastore path from current discovery config
 - Paginated GET requests with limit/offset and next link handling

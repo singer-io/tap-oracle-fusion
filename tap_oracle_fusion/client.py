@@ -12,6 +12,16 @@ REQUEST_TIMEOUT = 300
 class OracleClientError(Exception):
     """Raised for Oracle API errors."""
 
+    def __init__(
+        self,
+        message: str,
+        retryable: bool = False,
+        retry_after: Optional[int] = None,
+    ) -> None:
+        super().__init__(message)
+        self.retryable = retryable
+        self.retry_after = retry_after
+
 
 class OracleClient:
     """HTTP client wrapper with retries and pagination helpers."""
@@ -83,22 +93,43 @@ class OracleClient:
             singer.utils.sleep(retry_after)
 
     @staticmethod
+    def _should_give_up(exc: Exception) -> bool:
+        return isinstance(exc, OracleClientError) and not exc.retryable
+
+    @staticmethod
+    def _is_non_retryable_server_error(response_text: str) -> bool:
+        lowered = response_text.lower()
+        non_retryable_markers = (
+            "not supported for extract",
+            "nqserror: 43113",
+            "prepare query failed",
+            "page unavailable",
+        )
+        return any(marker in lowered for marker in non_retryable_markers)
+
+    @staticmethod
     def _raise_for_http_error(response: requests.Response) -> None:
         if response.status_code in (200, 201, 204):
             return
 
         if response.status_code == 429:
-            err = OracleClientError("Rate limit exceeded")
-            setattr(err, "retry_after", OracleClient._extract_retry_after_seconds(response))
-            raise err
+            raise OracleClientError(
+                "Rate limit exceeded",
+                retryable=True,
+                retry_after=OracleClient._extract_retry_after_seconds(response),
+            )
 
         if 500 <= response.status_code < 600:
+            response_snippet = response.text[:500]
+            retryable = not OracleClient._is_non_retryable_server_error(response_snippet)
             raise OracleClientError(
-                f"Server error {response.status_code}: {response.text[:500]}"
+                f"Server error {response.status_code}: {response_snippet}",
+                retryable=retryable,
             )
 
         raise OracleClientError(
-            f"HTTP {response.status_code}: {response.text[:500]}"
+            f"HTTP {response.status_code}: {response.text[:500]}",
+            retryable=False,
         )
 
     @backoff.on_exception(
@@ -106,6 +137,7 @@ class OracleClient:
         (requests.exceptions.Timeout, requests.exceptions.ConnectionError, OracleClientError),
         max_tries=5,
         on_backoff=_wait_if_retry_after,
+        giveup=_should_give_up,
     )
     def get(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
         url = f"{self.base_url}/{path.lstrip('/')}"
@@ -122,12 +154,12 @@ class OracleClient:
 
         payload = response.json()
         if not isinstance(payload, dict):
-            raise OracleClientError("Expected JSON object response")
+            raise OracleClientError("Expected JSON object response", retryable=False)
         return payload
 
     @staticmethod
     def _extract_records(payload: Mapping[str, Any]) -> list:
-        for key in ("items", "data"):
+        for key in ("items", "data", "dataStores", "datastores", "results"):
             records = payload.get(key)
             if isinstance(records, list):
                 return records
