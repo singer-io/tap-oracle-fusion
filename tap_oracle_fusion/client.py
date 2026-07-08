@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
@@ -90,7 +91,7 @@ class OracleClient:
         retry_after = getattr(exc, "retry_after", None)
         if retry_after:
             LOGGER.warning("Rate limited. Waiting %s seconds before retry", retry_after)
-            singer.utils.sleep(retry_after)
+            time.sleep(retry_after)
 
     @staticmethod
     def _should_give_up(exc: Exception) -> bool:
