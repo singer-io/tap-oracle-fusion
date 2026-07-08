@@ -11,13 +11,14 @@ Dynamic Singer tap for Oracle Fusion BICC datastores.
 
 ## Config
 
-Example config is available in [config.sample.json](config.sample.json).
+Example config is available in [config_sample.json](config_sample.json).
 
 Required keys:
 
 - start_date
-- base_url or server/region/instance
-- username/password or access_token
+- base_url
+- username
+- password
 
 Important optional keys:
 

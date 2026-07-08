@@ -158,11 +158,10 @@ def build_bicc_schema_and_metadata(
     primary_keys = infer_bicc_primary_keys(attributes)
     replication_key = infer_bicc_replication_key(attributes)
 
-    primary_key = primary_keys[0] if primary_keys else None
     replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
     mdata = metadata.get_standard_metadata(
         schema=schema_dict,
-        key_properties=[primary_key] if primary_key else [],
+        key_properties=primary_keys,
         valid_replication_keys=[replication_key] if replication_key else [],
         replication_method=replication_method,
     )

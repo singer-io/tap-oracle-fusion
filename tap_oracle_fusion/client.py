@@ -38,36 +38,15 @@ class OracleClient:
         if config.get("base_url"):
             return str(config["base_url"]).rstrip("/")
 
-        server = str(config.get("server", "")).strip()
-        region = str(config.get("region", "")).strip()
-        instance = str(config.get("instance", "")).strip()
-
-        if instance and region:
-            return f"https://{instance}.fa.{region}.oraclecloud.com"
-
-        if server.startswith("http://") or server.startswith("https://"):
-            return server.rstrip("/")
-
-        if server and region:
-            return f"https://{server}.fa.{region}.oraclecloud.com"
-
-        if server:
-            return f"https://{server}"
-
         raise OracleClientError(
-            "Unable to resolve Oracle base URL. Provide base_url or server/region."
+            "Unable to resolve Oracle base URL. Provide base_url."
         )
 
     def _auth_headers(self) -> Dict[str, str]:
-        headers = {
+        return {
             "Accept": "application/json",
             "Content-Type": "application/vnd.oracle.adf.resourceitem+json",
         }
-
-        if self.config.get("access_token"):
-            headers["Authorization"] = f"Bearer {self.config['access_token']}"
-
-        return headers
 
     def _auth_tuple(self) -> Optional[Tuple[str, str]]:
         username = self.config.get("username")

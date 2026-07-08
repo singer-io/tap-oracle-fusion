@@ -1,7 +1,7 @@
 import re
 import threading
 import os
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import quote
 
@@ -174,42 +174,48 @@ def _list_discovery_candidates(client: OracleClient, config: Mapping[str, Any]) 
     return candidates
 
 
-def _load_datastore_detail(client: OracleClient, datastore_name: str, detail_path: str) -> Any:
-    """Load datastore detail payload, falling back to empty object on failure."""
+def _load_datastore_detail(
+    client: OracleClient,
+    datastore_name: str,
+    detail_path: str,
+) -> Tuple[Any, Optional[str]]:
+    """Load datastore detail payload and return a skip reason when detail fetch fails."""
     try:
-        return client.get(detail_path)
+        return client.get(detail_path), None
     except Exception as err:  # pragma: no cover - defensive logging branch
         LOGGER.warning(
-            "Unable to fetch datastore detail for %s (%s). Falling back to empty schema.",
+            "Unable to fetch datastore detail for %s (%s).",
             datastore_name,
             err,
         )
-        return {}
+        return {}, str(err)
 
 
 def _build_catalog_entry(
+    datastore_name: str,
     stream_name: str,
     detail_path: str,
     detail_payload: Any,
-) -> Optional[CatalogEntry]:
+    skip_reason: Optional[str] = None,
+) -> Tuple[Optional[CatalogEntry], Optional[str]]:
     schema_dict, mdata, primary_keys = build_bicc_schema_and_metadata(
         detail_payload=detail_payload,
         oracle_path=detail_path,
     )
 
     if not schema_dict.get("properties"):
-        LOGGER.warning(
-            "Skipping datastore %s because no schema is available. We do not have access for the dataset.",
-            stream_name,
-        )
-        return None
+        exclusion_reason = skip_reason or "schema metadata was empty"
+        return None, exclusion_reason
 
-    return CatalogEntry(
-        stream=stream_name,
-        tap_stream_id=stream_name,
-        key_properties=primary_keys,
-        schema=Schema.from_dict(schema_dict),
-        metadata=mdata,
+    return (
+        CatalogEntry(
+            stream=stream_name,
+            tap_stream_id=stream_name,
+            key_properties=primary_keys,
+            schema=Schema.from_dict(schema_dict),
+            metadata=mdata,
+        ),
+        None,
     )
 
 
@@ -222,8 +228,10 @@ class BICCDiscoveryRunner:
         self.worker_count = _get_discovery_workers(config)
         self._thread_local = threading.local()
         self._progress_lock = threading.Lock()
+        self._skip_lock = threading.Lock()
         self._processed_count = 0
         self._total_count = 0
+        self._skipped_datastores: List[Tuple[str, str]] = []
 
     def _get_thread_client(self) -> OracleClient:
         client = getattr(self._thread_local, "client", None)
@@ -243,12 +251,18 @@ class BICCDiscoveryRunner:
         stream_name = _normalize_stream_name(datastore_name)
         detail_path = self._detail_path(datastore_name)
         detail_client = self._get_thread_client() if use_thread_client else self.client
-        detail_payload = _load_datastore_detail(detail_client, datastore_name, detail_path)
-        return _build_catalog_entry(
+        detail_payload, skip_reason = _load_datastore_detail(detail_client, datastore_name, detail_path)
+        entry, exclusion_reason = _build_catalog_entry(
+            datastore_name=datastore_name,
             stream_name=stream_name,
             detail_path=detail_path,
             detail_payload=detail_payload,
+            skip_reason=skip_reason,
         )
+        if exclusion_reason:
+            with self._skip_lock:
+                self._skipped_datastores.append((datastore_name, exclusion_reason))
+        return entry
 
     def _build_entries_sequential(self, datastore_names: List[str]) -> List[CatalogEntry]:
         entries: List[CatalogEntry] = []
@@ -290,6 +304,19 @@ class BICCDiscoveryRunner:
                 datastore_name,
             )
 
+    def _log_skipped_datastores(self) -> None:
+        if not self._skipped_datastores:
+            return
+
+        datastore_names = sorted({datastore_name for datastore_name, _ in self._skipped_datastores})
+        names_suffix = ", ".join(datastore_names)
+
+        LOGGER.warning(
+            "Excluding %s datastore(s) from catalog: %s",
+            len(datastore_names),
+            names_suffix,
+        )
+
     def discover(self) -> Catalog:
         datastore_names = self.list_candidates()
         self._total_count = len(datastore_names)
@@ -305,6 +332,7 @@ class BICCDiscoveryRunner:
         else:
             entries = self._build_entries_threaded(datastore_names)
 
+        self._log_skipped_datastores()
         return Catalog(streams=entries)
 
 

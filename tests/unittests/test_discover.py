@@ -41,6 +41,26 @@ class TestDiscoverHelpers(unittest.TestCase):
             "date-time",
         )
 
+    def test_build_bicc_schema_metadata_preserves_composite_primary_keys(self):
+        entry = {
+            "columns": [
+                {"columnName": "SetId", "dataType": "string", "isPrimaryKey": True},
+                {"columnName": "ItemId", "dataType": "string", "isPrimaryKey": True},
+                {"columnName": "LastUpdateDate", "dataType": "timestamp", "isLastUpdateDate": True},
+            ]
+        }
+
+        _, mdata, primary_keys = schema_module.build_bicc_schema_and_metadata(
+            entry,
+            "biacm/rest/meta/datastores/FscmTopModelAM.CompositeKeyStore",
+        )
+
+        self.assertEqual(primary_keys, ["SetId", "ItemId"])
+        self.assertEqual(
+            metadata.to_map(mdata)[()].get("table-key-properties"),
+            ["SetId", "ItemId"],
+        )
+
 
 class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
@@ -151,6 +171,34 @@ class TestDiscoverFlow(unittest.TestCase):
 
         self.assertEqual(len(catalog.streams), 1)
         self.assertEqual(catalog.streams[0].tap_stream_id, "accessible_store")
+
+    @mock.patch("tap_oracle_fusion.discover.LOGGER")
+    @mock.patch("tap_oracle_fusion.discover.OracleClient")
+    def test_discover_logs_skipped_datastore_summary(self, mock_client_cls, mock_logger):
+        mock_client = mock_client_cls.return_value
+
+        def _get_side_effect(path, params=None):
+            if path == "biacm/rest/meta/datastores":
+                return {"dataStores": ["Accessible.Store", "Inaccessible.Store"]}
+            if path == "biacm/rest/meta/datastores/Accessible.Store":
+                return {"columns": [{"columnName": "Id", "dataType": "string"}]}
+            if path == "biacm/rest/meta/datastores/Inaccessible.Store":
+                return {}
+            raise AssertionError(f"Unexpected path: {path} params={params}")
+
+        mock_client.get.side_effect = _get_side_effect
+
+        discover_module.discover({"base_url": "https://example", "discovery_workers": 1})
+
+        self.assertEqual(len(mock_logger.warning.call_args_list), 1)
+        self.assertEqual(
+            mock_logger.warning.call_args_list[0],
+            mock.call(
+                "Excluding %s datastore(s) from catalog: %s",
+                1,
+                "Inaccessible.Store",
+            ),
+        )
 
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_get_stream_resource_map_applies_parent_filter(self, mock_client_cls):

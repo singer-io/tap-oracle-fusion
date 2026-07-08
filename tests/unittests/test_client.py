@@ -16,13 +16,6 @@ class TestOracleClient(unittest.TestCase):
         config = {"base_url": "https://example.oracle.com/"}
         self.assertEqual(OracleClient._resolve_base_url(config), "https://example.oracle.com")
 
-    def test_resolve_base_url_from_instance_and_region(self):
-        config = {"instance": "myinst", "region": "us1"}
-        self.assertEqual(
-            OracleClient._resolve_base_url(config),
-            "https://myinst.fa.us1.oraclecloud.com",
-        )
-
     def test_resolve_base_url_raises_when_insufficient_config(self):
         with self.assertRaises(OracleClientError):
             OracleClient._resolve_base_url({})
