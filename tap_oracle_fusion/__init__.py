@@ -8,6 +8,9 @@ from tap_oracle_fusion.sync import sync
 LOGGER = singer.get_logger()
 
 REQUIRED_CONFIG_KEYS = [
+    "base_url",
+    "username",
+    "password",
     "start_date",
 ]
 

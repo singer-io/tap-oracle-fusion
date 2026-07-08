@@ -11,7 +11,7 @@ Dynamic Singer tap for Oracle Fusion BICC datastores.
 
 ## Config
 
-Example config is available in [config.json](config.json).
+Example config is available in [config.sample.json](config.sample.json).
 
 Required keys:
 
@@ -26,6 +26,20 @@ Important optional keys:
 - discovery_limit: integer cap for number of datastores to process during discovery (useful for validation runs)
 - discovery_workers (or discovery_threads): number of concurrent workers for datastore detail discovery (`auto` or integer, default: auto, max: 128)
 - page_size: number of records to fetch per page (default: 100)
+
+Sample config:
+
+```json
+{
+	"base_url": "https://your-instance.example.oraclecloud.com",
+	"username": "your_username",
+	"password": "your_password",
+	"start_date": "2020-01-01T00:00:00Z",
+	"discovery_parents": ["CrmAnalyticsAM"],
+	"page_size": 100,
+	"request_timeout": 300
+}
+```
 
 ## Usage
 
@@ -45,7 +59,7 @@ tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 
 - GET /biacm/rest/meta/datastores
 - GET /biacm/rest/meta/datastores/{datastoreName} (for column metadata)
-- Each discovered stream stores its datastore path in stream metadata (`oracle-path`)
+- Each discovered stream stores its datastore path in stream metadata (`tap-oracle-fusion.entity-set`)
 
 ## API calls used by sync
 

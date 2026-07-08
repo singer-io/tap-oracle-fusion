@@ -4,6 +4,8 @@ import singer
 from singer import metadata
 
 LOGGER = singer.get_logger()
+MDATA_NS = "tap-oracle-fusion"
+ENTITY_SET_METADATA_KEY = f"{MDATA_NS}.entity-set"
 
 REPLICATION_KEY_CANDIDATES = [
     "LastUpdateDate",
@@ -173,7 +175,7 @@ def build_bicc_schema_and_metadata(
             "inclusion",
             "automatic",
         )
-    mdata_map = metadata.write(mdata_map, (), "oracle-path", oracle_path)
+    mdata_map = metadata.write(mdata_map, (), ENTITY_SET_METADATA_KEY, oracle_path)
     return schema_dict, metadata.to_list(mdata_map), primary_keys
 
 

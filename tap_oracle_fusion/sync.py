@@ -6,6 +6,7 @@ from singer import metadata
 
 from tap_oracle_fusion.client import OracleClient
 from tap_oracle_fusion.discover import get_stream_resource_map
+from tap_oracle_fusion.schema import ENTITY_SET_METADATA_KEY
 
 LOGGER = singer.get_logger()
 
@@ -49,7 +50,7 @@ def _get_replication_key(catalog_entry: singer.CatalogEntry) -> Optional[str]:
 
 def _get_oracle_path(catalog_entry: singer.CatalogEntry) -> str:
     stream_meta = _get_stream_meta(catalog_entry)
-    oracle_path = stream_meta.get("oracle-path")
+    oracle_path = stream_meta.get(ENTITY_SET_METADATA_KEY)
     if isinstance(oracle_path, str) and oracle_path:
         return oracle_path
     return ""
@@ -77,7 +78,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
         raise RuntimeError("Invalid state format. 'bookmarks' must be an object.")
 
     client = OracleClient(config)
-    stream_to_path = get_stream_resource_map(config)
+    stream_to_path: Optional[Dict[str, str]] = None
     selected_streams = catalog.get_selected_streams(state)
     with singer.Transformer() as transformer:
         for selected_stream in selected_streams:
@@ -90,7 +91,15 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             singer.write_schema(stream_name, stream_schema, stream_key_properties)
 
             replication_key = _get_replication_key(catalog_entry)
-            path = _get_oracle_path(catalog_entry) or stream_to_path.get(stream_name)
+            path = _get_oracle_path(catalog_entry)
+            if not path:
+                if stream_to_path is None:
+                    LOGGER.info(
+                        "Catalog missing entity-set metadata for one or more streams; "
+                        "resolving stream paths from discovery candidates."
+                    )
+                    stream_to_path = get_stream_resource_map(config)
+                path = stream_to_path.get(stream_name)
             if not path:
                 raise RuntimeError(
                     f"Could not resolve Oracle path for stream {stream_name}. "

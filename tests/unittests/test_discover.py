@@ -105,7 +105,7 @@ class TestDiscoverFlow(unittest.TestCase):
 
         mdata = metadata.to_map(entry.metadata)
         self.assertEqual(
-            mdata[()].get("oracle-path"),
+            mdata[()].get(schema_module.ENTITY_SET_METADATA_KEY),
             "biacm/rest/meta/datastores/Worker",
         )
         self.assertEqual(mdata[()].get("valid-replication-keys"), ["LastUpdateDate"])
