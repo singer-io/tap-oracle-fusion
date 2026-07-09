@@ -175,8 +175,9 @@ class OracleClient:
         current_params = dict(params or {})
         current_params.setdefault("limit", page_size)
         current_params.setdefault("offset", 0)
+        has_next_page = True
 
-        while True:
+        while has_next_page:
             payload = self.get(current_path, params=current_params)
             records = self._extract_records(payload)
             for record in records:
@@ -194,4 +195,4 @@ class OracleClient:
                 current_params["offset"] = next_offset
                 continue
 
-            break
+            has_next_page = False
