@@ -310,7 +310,14 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         )
                         update_currently_syncing(state, None)
                         continue
-                    raise
+                    LOGGER.error(
+                        "Skipping stream=%s datastore=%s due to ESS extract error: %s",
+                        stream_name,
+                        datastore,
+                        err,
+                    )
+                    update_currently_syncing(state, None)
+                    continue
             else:
                 records_iter = client.get_records(path, params=params)
 
