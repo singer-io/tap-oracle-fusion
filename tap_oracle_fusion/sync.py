@@ -9,6 +9,7 @@ from tap_oracle_fusion.client import OracleClient
 from tap_oracle_fusion.bicc_extract import (
     BICCExtractClient,
     DEFAULT_INITIAL_EXTRACT_DATE,
+    ExtractError,
 )
 from tap_oracle_fusion.discover import get_stream_resource_map
 from tap_oracle_fusion.schema import DATASTORE_KEY_METADATA_KEY, ENTITY_SET_METADATA_KEY
@@ -71,15 +72,109 @@ def _datastore_from_path(path: str) -> Optional[str]:
     raw = path[idx + len(prefix):]
     if not raw:
         return None
-    return unquote(raw)
+    return unquote(raw).strip()
 
 
 def _get_datastore_name(catalog_entry: singer.CatalogEntry, path: str) -> Optional[str]:
     stream_meta = _get_stream_meta(catalog_entry)
     datastore = stream_meta.get(DATASTORE_KEY_METADATA_KEY)
     if isinstance(datastore, str) and datastore:
-        return datastore
+        return datastore.strip()
     return _datastore_from_path(path)
+
+
+def _schema_property_lookup(stream_schema: Mapping[str, Any]) -> Dict[str, str]:
+    properties = stream_schema.get("properties")
+    if not isinstance(properties, Mapping):
+        return {}
+    return {
+        key.lower(): key
+        for key in properties.keys()
+        if isinstance(key, str)
+    }
+
+
+def _normalize_record_keys_for_schema(record: Mapping[str, Any], property_lookup: Mapping[str, str]) -> Dict[str, Any]:
+    if not property_lookup:
+        return dict(record)
+
+    normalized: Dict[str, Any] = {}
+    for key, value in record.items():
+        if not isinstance(key, str):
+            normalized[key] = value
+            continue
+        canonical_key = property_lookup.get(key.lower(), key)
+        normalized[canonical_key] = value
+    return normalized
+
+
+def _is_datetime_property(prop_schema: Any) -> bool:
+    return isinstance(prop_schema, Mapping) and prop_schema.get("format") == "date-time"
+
+
+def _datetime_schema_fields(stream_schema: Mapping[str, Any]) -> set[str]:
+    properties = stream_schema.get("properties")
+    if not isinstance(properties, Mapping):
+        return set()
+
+    return {
+        field_name
+        for field_name, field_schema in properties.items()
+        if isinstance(field_name, str) and _is_datetime_property(field_schema)
+    }
+
+
+def _is_valid_datetime_value(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return True
+        normalized = text.replace("Z", "+00:00")
+        try:
+            datetime.fromisoformat(normalized)
+            return True
+        except ValueError:
+            return False
+    return False
+
+
+def _sanitize_record_datetimes_for_schema(
+    record: Mapping[str, Any],
+    datetime_fields: set[str],
+    stream_name: str,
+    warned_values: set[tuple[str, str, str]],
+) -> Dict[str, Any]:
+    if not datetime_fields:
+        return dict(record)
+
+    sanitized = dict(record)
+    for field in datetime_fields:
+        if field not in sanitized:
+            continue
+        value = sanitized[field]
+        if _is_valid_datetime_value(value):
+            continue
+        warning_key = (stream_name, field, repr(value))
+        if warning_key not in warned_values:
+            warned_values.add(warning_key)
+            LOGGER.warning(
+                "stream=%s field=%s has invalid date-time value %r; writing null",
+                stream_name,
+                field,
+                value,
+            )
+        sanitized[field] = None
+    return sanitized
+
+
+def _is_unsupported_datastore_create_job_error(error: Exception) -> bool:
+    message = str(error)
+    return (
+        "JBO-26048" in message
+        and "C_JOB_DATA_STORE_REL_C_DA_FK1" in message
+    )
 
 
 def _stream_bookmark_value(state: Dict[str, Any], stream: str, key: str, default: Optional[str] = None) -> Optional[str]:
@@ -132,6 +227,9 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             stream_schema = catalog_entry.schema.to_dict()
             stream_metadata = metadata.to_map(catalog_entry.metadata)
             stream_key_properties = catalog_entry.key_properties
+            schema_property_lookup = _schema_property_lookup(stream_schema)
+            datetime_fields = _datetime_schema_fields(stream_schema)
+            warned_invalid_datetime_values: set[tuple[str, str, str]] = set()
 
             singer.write_schema(stream_name, stream_schema, stream_key_properties)
 
@@ -169,42 +267,62 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
 
             record_count = 0
             records_iter = None
-            if _metadata_path_is_bicc(path):
+            is_bicc_stream = _metadata_path_is_bicc(path)
+            if is_bicc_stream:
                 datastore = _get_datastore_name(catalog_entry, path)
                 if not datastore:
                     raise RuntimeError(
                         f"Could not resolve BICC datastore name for stream {stream_name}."
                     )
+                try:
+                    existing_job_id = _stream_bookmark_value(state, stream_name, "bicc_job_id")
+                    create_new_job = force_full or not existing_job_id
+                    if create_new_job:
+                        job_name = f"file_{bicc_client.datastore_slug(datastore)}"
+                        if force_full:
+                            suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+                            job_name = f"{job_name}__full_{suffix}"
+                        job_id = bicc_client.create_bicc_job(
+                            datastore=datastore,
+                            initial_extract_date=initial_extract_date,
+                            job_name=job_name,
+                        )
+                        state = _write_stream_bookmark(state, stream_name, "bicc_job_id", job_id)
+                        singer.write_state(state)
+                    else:
+                        job_id = str(existing_job_id)
 
-                existing_job_id = _stream_bookmark_value(state, stream_name, "bicc_job_id")
-                create_new_job = force_full or not existing_job_id
-                if create_new_job:
-                    job_name = f"file_{bicc_client.datastore_slug(datastore)}"
-                    if force_full:
-                        suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
-                        job_name = f"{job_name}__full_{suffix}"
-                    job_id = bicc_client.create_bicc_job(
+                    records_iter, _ = bicc_client.run_extract_to_rows(
                         datastore=datastore,
-                        initial_extract_date=initial_extract_date,
-                        job_name=job_name,
+                        job_id=job_id,
+                        ess_poll_interval=ess_poll_interval,
+                        ess_max_polls=ess_max_polls,
+                        ucm_poll_interval=ucm_poll_interval,
+                        ucm_max_attempts=ucm_max_attempts,
                     )
-                    state = _write_stream_bookmark(state, stream_name, "bicc_job_id", job_id)
-                    singer.write_state(state)
-                else:
-                    job_id = str(existing_job_id)
-
-                records_iter, _ = bicc_client.run_extract_to_rows(
-                    datastore=datastore,
-                    job_id=job_id,
-                    ess_poll_interval=ess_poll_interval,
-                    ess_max_polls=ess_max_polls,
-                    ucm_poll_interval=ucm_poll_interval,
-                    ucm_max_attempts=ucm_max_attempts,
-                )
+                except ExtractError as err:
+                    if _is_unsupported_datastore_create_job_error(err):
+                        LOGGER.warning(
+                            "Skipping stream=%s datastore=%s due to unsupported Oracle BICC create-job constraint: %s",
+                            stream_name,
+                            datastore,
+                            err,
+                        )
+                        update_currently_syncing(state, None)
+                        continue
+                    raise
             else:
                 records_iter = client.get_records(path, params=params)
 
             for record in records_iter:
+                if is_bicc_stream:
+                    record = _normalize_record_keys_for_schema(record, schema_property_lookup)
+                    record = _sanitize_record_datetimes_for_schema(
+                        record,
+                        datetime_fields,
+                        stream_name,
+                        warned_invalid_datetime_values,
+                    )
                 transformed_record = transformer.transform(
                     record,
                     stream_schema,

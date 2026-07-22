@@ -41,6 +41,46 @@ class TestDiscoverHelpers(unittest.TestCase):
             "date-time",
         )
 
+    def test_build_schema_for_varchar_date_named_column_does_not_force_datetime(self):
+        entry = {
+            "name": "StandardHeaderPVO",
+            "columns": [
+                {
+                    "columnName": "POSystemParametersDefaultPromiseDate",
+                    "dataType": "VARCHAR",
+                },
+            ],
+        }
+
+        schema = schema_module.build_bicc_schema(entry)
+
+        self.assertEqual(
+            schema["properties"]["POSystemParametersDefaultPromiseDate"]["type"],
+            ["null", "string"],
+        )
+        self.assertNotIn(
+            "format",
+            schema["properties"]["POSystemParametersDefaultPromiseDate"],
+        )
+
+    def test_build_schema_for_numeric_column_uses_number_type(self):
+        entry = {
+            "name": "StandardHeaderPVO",
+            "columns": [
+                {
+                    "columnName": "POSystemParametersDoctypeId",
+                    "dataType": "NUMERIC",
+                },
+            ],
+        }
+
+        schema = schema_module.build_bicc_schema(entry)
+
+        self.assertEqual(
+            schema["properties"]["POSystemParametersDoctypeId"]["type"],
+            ["null", "number"],
+        )
+
     def test_build_bicc_schema_metadata_preserves_composite_primary_keys(self):
         entry = {
             "columns": [

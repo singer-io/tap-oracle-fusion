@@ -32,9 +32,13 @@ def _normalize_type_name(type_name: Optional[str]) -> str:
     return (type_name or "").strip().lower()
 
 
+def _is_datetime_type(oracle_type: str) -> bool:
+    return oracle_type in _DATETIME_TYPE_NAMES
+
+
 def _is_datetime_field(attribute_name: str, oracle_type: str) -> bool:
     field_name = attribute_name.lower()
-    if oracle_type in _DATETIME_TYPE_NAMES:
+    if _is_datetime_type(oracle_type):
         return True
     return (
         field_name.endswith("date")
@@ -54,7 +58,7 @@ def oracle_attribute_to_property_schema(attribute: Mapping[str, Any]) -> Dict[st
         schema: Dict[str, Any] = {"type": ["null", "string"]}
     elif attr_type in {"integer", "int", "long", "short"}:
         schema = {"type": ["null", "integer"]}
-    elif attr_type in {"number", "double", "decimal", "float"}:
+    elif attr_type in {"number", "numeric", "double", "decimal", "float"}:
         schema = {"type": ["null", "number"]}
     elif attr_type in {"boolean", "bool"}:
         schema = {"type": ["null", "boolean"]}
@@ -68,7 +72,7 @@ def oracle_attribute_to_property_schema(attribute: Mapping[str, Any]) -> Dict[st
     else:
         schema = {"type": ["null", "string"]}
 
-    if _is_datetime_field(attr_name, attr_type) and "string" in schema.get("type", []):
+    if _is_datetime_type(attr_type) and "string" in schema.get("type", []):
         schema["format"] = "date-time"
 
     return schema
@@ -242,7 +246,7 @@ def infer_replication_key(attributes: Iterable[Mapping[str, Any]]) -> Optional[s
 
     for name, attr in name_to_attr.items():
         type_name = _normalize_type_name(str(attr.get("type", "")))
-        if _is_datetime_field(name, type_name) and bool(attr.get("queryable", True)):
+        if _is_datetime_type(type_name) and bool(attr.get("queryable", True)):
             return name
 
     return None
@@ -304,9 +308,6 @@ def enrich_schema_with_samples(schema: Dict[str, Any], sample_records: Iterable[
                 raw_types = properties[key].get("type", ["null", "string"])
                 current_types = [raw_types] if isinstance(raw_types, str) else list(raw_types)
                 properties[key]["type"] = _merge_types(current_types, observed_type)
-
-            if _is_datetime_field(key, "") and "string" in properties[key].get("type", []):
-                properties[key]["format"] = "date-time"
 
     return schema
 

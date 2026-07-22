@@ -26,6 +26,10 @@ Important optional keys:
 - parent_resource_groups (or discovery_parents): list of top-level datastore parents to include during discovery (for example: `FscmTopModelAM`, `CrmAnalyticsAM`). If set with `datastores`, both filters are applied.
 - discovery_limit: integer cap for number of datastores to process during discovery (useful for validation runs)
 - discovery_workers (or discovery_threads): number of concurrent workers for datastore detail discovery (`auto` or integer, default: auto, max: 128)
+- bicc_job_id (or job_id/extract_job_id): existing Oracle BICC Job ID required for ESS submitRequest (example: `1`)
+- bicc_enable_ess_sync: whether sync triggers ESS submit/poll per stream before reading records (default: `true`)
+- ess_poll_interval_seconds: ESS poll interval in seconds (default: `20`)
+- ess_max_polls: maximum ESS poll attempts per stream (default: `30`)
 - page_size: number of records to fetch per page (default: 100)
 
 Sample config:
@@ -37,6 +41,10 @@ Sample config:
 	"password": "your_password",
 	"start_date": "2020-01-01T00:00:00Z",
 	"parent_resource_groups": ["CrmAnalyticsAM"],
+	"bicc_job_id": "1",
+	"bicc_enable_ess_sync": true,
+	"ess_poll_interval_seconds": 20,
+	"ess_max_polls": 30,
 	"page_size": 100,
 	"request_timeout": 300
 }
@@ -66,5 +74,10 @@ tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 
 Per selected stream:
 
+- Optional ESS submit/poll (enabled by default):
+	- POST `/bi/ess/esswebservice` `submitRequest` with `DATA_STORE_LIST` and `JOB_ID`
+	- POST `/bi/ess/esswebservice` `getRequestState` until terminal state
 - Resolve stream-to-datastore path from current discovery config
-- Paginated GET requests with limit/offset and next link handling
+- Metadata fallback is disabled for `biacm/rest/meta/datastores/*` paths.
+  Sync now fails fast if ESS is disabled/misconfigured or when ESS succeeds but UCM download/read is not yet implemented.
+- Paginated GET requests with limit/offset and next link handling are only used for non-metadata resource paths.
