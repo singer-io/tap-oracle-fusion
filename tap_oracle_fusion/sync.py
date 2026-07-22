@@ -1,12 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Mapping, Optional
+from urllib.parse import unquote
 
 import singer
 from singer import metadata
 
 from tap_oracle_fusion.client import OracleClient
+from tap_oracle_fusion.bicc_extract import (
+    BICCExtractClient,
+    DEFAULT_INITIAL_EXTRACT_DATE,
+)
 from tap_oracle_fusion.discover import get_stream_resource_map
-from tap_oracle_fusion.schema import ENTITY_SET_METADATA_KEY
+from tap_oracle_fusion.schema import DATASTORE_KEY_METADATA_KEY, ENTITY_SET_METADATA_KEY
 
 LOGGER = singer.get_logger()
 
@@ -56,6 +61,39 @@ def _get_oracle_path(catalog_entry: singer.CatalogEntry) -> str:
     return ""
 
 
+def _datastore_from_path(path: str) -> Optional[str]:
+    if not path:
+        return None
+    prefix = "biacm/rest/meta/datastores/"
+    idx = path.find(prefix)
+    if idx < 0:
+        return None
+    raw = path[idx + len(prefix):]
+    if not raw:
+        return None
+    return unquote(raw)
+
+
+def _get_datastore_name(catalog_entry: singer.CatalogEntry, path: str) -> Optional[str]:
+    stream_meta = _get_stream_meta(catalog_entry)
+    datastore = stream_meta.get(DATASTORE_KEY_METADATA_KEY)
+    if isinstance(datastore, str) and datastore:
+        return datastore
+    return _datastore_from_path(path)
+
+
+def _stream_bookmark_value(state: Dict[str, Any], stream: str, key: str, default: Optional[str] = None) -> Optional[str]:
+    return singer.get_bookmark(state, stream, key, default)
+
+
+def _write_stream_bookmark(state: Dict[str, Any], stream: str, key: str, value: str) -> Dict[str, Any]:
+    return singer.write_bookmark(state, stream, key, value)
+
+
+def _metadata_path_is_bicc(path: str) -> bool:
+    return path.startswith("biacm/rest/meta/datastores/")
+
+
 def _bookmark_value(state: Dict[str, Any], stream: str, replication_key: str, start_date: str) -> str:
     return singer.get_bookmark(state, stream, replication_key, start_date)
 
@@ -78,8 +116,15 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
         raise RuntimeError("Invalid state format. 'bookmarks' must be an object.")
 
     client = OracleClient(config)
+    bicc_client = BICCExtractClient(config)
     stream_to_path: Optional[Dict[str, str]] = None
     selected_streams = catalog.get_selected_streams(state)
+    ess_poll_interval = int(config.get("ess_poll_interval_seconds", 20))
+    ess_max_polls = int(config.get("ess_max_polls", 30))
+    ucm_poll_interval = int(config.get("ucm_poll_interval_seconds", 12))
+    ucm_max_attempts = int(config.get("ucm_max_attempts", 30))
+    initial_extract_date = str(config.get("initial_extract_date", DEFAULT_INITIAL_EXTRACT_DATE))
+    force_full = bool(config.get("bicc_force_full_sync", False))
     with singer.Transformer() as transformer:
         for selected_stream in selected_streams:
             catalog_entry = catalog.get_stream(selected_stream.tap_stream_id)
@@ -123,7 +168,43 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             update_currently_syncing(state, stream_name)
 
             record_count = 0
-            for record in client.get_records(path, params=params):
+            records_iter = None
+            if _metadata_path_is_bicc(path):
+                datastore = _get_datastore_name(catalog_entry, path)
+                if not datastore:
+                    raise RuntimeError(
+                        f"Could not resolve BICC datastore name for stream {stream_name}."
+                    )
+
+                existing_job_id = _stream_bookmark_value(state, stream_name, "bicc_job_id")
+                create_new_job = force_full or not existing_job_id
+                if create_new_job:
+                    job_name = f"file_{bicc_client.datastore_slug(datastore)}"
+                    if force_full:
+                        suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+                        job_name = f"{job_name}__full_{suffix}"
+                    job_id = bicc_client.create_bicc_job(
+                        datastore=datastore,
+                        initial_extract_date=initial_extract_date,
+                        job_name=job_name,
+                    )
+                    state = _write_stream_bookmark(state, stream_name, "bicc_job_id", job_id)
+                    singer.write_state(state)
+                else:
+                    job_id = str(existing_job_id)
+
+                records_iter, _ = bicc_client.run_extract_to_rows(
+                    datastore=datastore,
+                    job_id=job_id,
+                    ess_poll_interval=ess_poll_interval,
+                    ess_max_polls=ess_max_polls,
+                    ucm_poll_interval=ucm_poll_interval,
+                    ucm_max_attempts=ucm_max_attempts,
+                )
+            else:
+                records_iter = client.get_records(path, params=params)
+
+            for record in records_iter:
                 transformed_record = transformer.transform(
                     record,
                     stream_schema,
@@ -143,7 +224,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         elif not max_bookmark or record_replication_value > max_bookmark:
                             max_bookmark = record_replication_value
 
-            if replication_key and max_bookmark:
+            if replication_key and max_bookmark and not _metadata_path_is_bicc(path):
                 state = _write_bookmark(state, stream_name, replication_key, max_bookmark)
                 singer.write_state(state)
 

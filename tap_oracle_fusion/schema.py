@@ -6,6 +6,7 @@ from singer import metadata
 LOGGER = singer.get_logger()
 MDATA_NS = "tap-oracle-fusion"
 ENTITY_SET_METADATA_KEY = f"{MDATA_NS}.entity-set"
+DATASTORE_KEY_METADATA_KEY = f"{MDATA_NS}.datastore-key"
 
 REPLICATION_KEY_CANDIDATES = [
     "LastUpdateDate",
@@ -151,6 +152,7 @@ def build_bicc_schema(detail_payload: Any) -> Dict[str, Any]:
 def build_bicc_schema_and_metadata(
     detail_payload: Any,
     oracle_path: str,
+    datastore_name: str,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[str]]:
     """Build Singer schema and metadata for a BICC datastore detail payload."""
     attributes = _coerce_attribute_payload(detail_payload)
@@ -175,6 +177,7 @@ def build_bicc_schema_and_metadata(
             "automatic",
         )
     mdata_map = metadata.write(mdata_map, (), ENTITY_SET_METADATA_KEY, oracle_path)
+    mdata_map = metadata.write(mdata_map, (), DATASTORE_KEY_METADATA_KEY, datastore_name)
     return schema_dict, metadata.to_list(mdata_map), primary_keys
 
 
