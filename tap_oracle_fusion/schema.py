@@ -1,3 +1,4 @@
+"""Schema and metadata builders for Oracle Fusion resource and BICC datastore streams."""
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import singer
@@ -52,7 +53,6 @@ def _is_datetime_field(attribute_name: str, oracle_type: str) -> bool:
 def oracle_attribute_to_property_schema(attribute: Mapping[str, Any]) -> Dict[str, Any]:
     """Map an Oracle describe attribute to a JSON schema property."""
     attr_type = _normalize_type_name(str(attribute.get("type", "string")))
-    attr_name = str(attribute.get("name", "field"))
 
     if attr_type in {"string", "varchar", "char", "uuid"}:
         schema: Dict[str, Any] = {"type": ["null", "string"]}
@@ -107,6 +107,7 @@ def _attribute_type(attribute: Mapping[str, Any]) -> str:
 
 
 def infer_bicc_primary_keys(attributes: Iterable[Mapping[str, Any]]) -> List[str]:
+    """Return a list of primary key field names from BICC attribute metadata."""
     primary_keys: List[str] = []
     seen = set()
 
@@ -122,6 +123,7 @@ def infer_bicc_primary_keys(attributes: Iterable[Mapping[str, Any]]) -> List[str
 
 
 def infer_bicc_replication_key(attributes: Iterable[Mapping[str, Any]]) -> Optional[str]:
+    """Return the best replication key field name from BICC attribute metadata."""
     for attribute in attributes:
         name = _attribute_name(attribute)
         if name and bool(attribute.get("isLastUpdateDate")):
@@ -185,10 +187,15 @@ def build_bicc_schema_and_metadata(
     return schema_dict, metadata.to_list(mdata_map), primary_keys
 
 
-def _extract_attributes(describe_payload: Mapping[str, Any], resource_name: str) -> List[Mapping[str, Any]]:
+def _extract_attributes(
+    describe_payload: Mapping[str, Any], resource_name: str
+) -> List[Mapping[str, Any]]:
+    """Extract the attribute list from a resource describe payload."""
     resources_obj = describe_payload.get("Resources", {})
     if isinstance(resources_obj, Mapping):
-        resource_obj = resources_obj.get(resource_name) or resources_obj.get(resource_name.lower())
+        resource_obj = (
+            resources_obj.get(resource_name) or resources_obj.get(resource_name.lower())
+        )
         if isinstance(resource_obj, Mapping):
             attributes = resource_obj.get("attributes", [])
             if isinstance(attributes, list):
@@ -201,11 +208,17 @@ def _extract_attributes(describe_payload: Mapping[str, Any], resource_name: str)
     return []
 
 
-def infer_primary_key(resource_name: str, describe_payload: Mapping[str, Any], attributes: Iterable[Mapping[str, Any]]) -> Optional[str]:
+def infer_primary_key(  # pylint: disable=too-many-nested-blocks
+    resource_name: str,
+    describe_payload: Mapping[str, Any],
+    attributes: Iterable[Mapping[str, Any]],
+) -> Optional[str]:
     """Infer PK from finder metadata, then fallback to id-like attributes."""
     resources_obj = describe_payload.get("Resources", {})
     if isinstance(resources_obj, Mapping):
-        resource_obj = resources_obj.get(resource_name) or resources_obj.get(resource_name.lower())
+        resource_obj = (
+            resources_obj.get(resource_name) or resources_obj.get(resource_name.lower())
+        )
         if isinstance(resource_obj, Mapping):
             collection = resource_obj.get("collection", {})
             if isinstance(collection, Mapping):
@@ -234,6 +247,7 @@ def infer_primary_key(resource_name: str, describe_payload: Mapping[str, Any], a
 
 
 def infer_replication_key(attributes: Iterable[Mapping[str, Any]]) -> Optional[str]:
+    """Return the best replication key field name from a resource attribute list."""
     name_to_attr = {
         str(attr.get("name")): attr
         for attr in attributes
@@ -253,6 +267,7 @@ def infer_replication_key(attributes: Iterable[Mapping[str, Any]]) -> Optional[s
 
 
 def build_schema(attributes: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Build a JSON schema dict from a resource attribute list."""
     properties: Dict[str, Any] = {}
     for attribute in attributes:
         name = attribute.get("name")
@@ -266,7 +281,8 @@ def build_schema(attributes: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def _observed_json_type(value: Any) -> str:
+def _observed_json_type(value: Any) -> str:  # pylint: disable=too-many-return-statements
+    """Return the JSON schema type name for a Python value."""
     if value is None:
         return "null"
     if isinstance(value, bool):
@@ -283,6 +299,7 @@ def _observed_json_type(value: Any) -> str:
 
 
 def _merge_types(current_types: List[str], observed_type: str) -> List[str]:
+    """Merge an observed type into an existing list of JSON schema types."""
     ordered = ["null", "boolean", "integer", "number", "string", "array", "object"]
     merged = set(current_types)
     merged.add(observed_type)
@@ -293,7 +310,9 @@ def _merge_types(current_types: List[str], observed_type: str) -> List[str]:
     return [value for value in ordered if value in merged]
 
 
-def enrich_schema_with_samples(schema: Dict[str, Any], sample_records: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+def enrich_schema_with_samples(
+    schema: Dict[str, Any], sample_records: Iterable[Mapping[str, Any]]
+) -> Dict[str, Any]:
     """Merge observed sample payload types into generated schema properties."""
     properties = schema.setdefault("properties", {})
     for record in sample_records:
@@ -312,7 +331,12 @@ def enrich_schema_with_samples(schema: Dict[str, Any], sample_records: Iterable[
     return schema
 
 
-def build_metadata(schema: Mapping[str, Any], primary_key: Optional[str], replication_key: Optional[str]) -> List[Dict[str, Any]]:
+def build_metadata(
+    schema: Mapping[str, Any],
+    primary_key: Optional[str],
+    replication_key: Optional[str],
+) -> List[Dict[str, Any]]:
+    """Build Singer metadata list for a resource schema."""
     replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
     mdata = metadata.new()
     mdata = metadata.get_standard_metadata(

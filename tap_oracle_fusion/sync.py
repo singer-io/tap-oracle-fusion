@@ -1,3 +1,4 @@
+"""Sync logic for Oracle Fusion REST and BICC datastore streams."""
 from datetime import datetime, timezone
 from typing import Any, Dict, Mapping, Optional
 from urllib.parse import unquote
@@ -35,6 +36,7 @@ def _state_is_valid(state: Dict[str, Any]) -> bool:
 
 
 def update_currently_syncing(state: Dict[str, Any], stream_name: Optional[str]) -> None:
+    """Update and write the currently_syncing key in state."""
     if not stream_name and singer.get_currently_syncing(state):
         del state["currently_syncing"]
     else:
@@ -94,7 +96,9 @@ def _schema_property_lookup(stream_schema: Mapping[str, Any]) -> Dict[str, str]:
     }
 
 
-def _normalize_record_keys_for_schema(record: Mapping[str, Any], property_lookup: Mapping[str, str]) -> Dict[str, Any]:
+def _normalize_record_keys_for_schema(
+    record: Mapping[str, Any], property_lookup: Mapping[str, str]
+) -> Dict[str, Any]:
     if not property_lookup:
         return dict(record)
 
@@ -177,11 +181,15 @@ def _is_unsupported_datastore_create_job_error(error: Exception) -> bool:
     )
 
 
-def _stream_bookmark_value(state: Dict[str, Any], stream: str, key: str, default: Optional[str] = None) -> Optional[str]:
+def _stream_bookmark_value(
+    state: Dict[str, Any], stream: str, key: str, default: Optional[str] = None
+) -> Optional[str]:
     return singer.get_bookmark(state, stream, key, default)
 
 
-def _write_stream_bookmark(state: Dict[str, Any], stream: str, key: str, value: str) -> Dict[str, Any]:
+def _write_stream_bookmark(
+    state: Dict[str, Any], stream: str, key: str, value: str
+) -> Dict[str, Any]:
     return singer.write_bookmark(state, stream, key, value)
 
 
@@ -189,11 +197,15 @@ def _metadata_path_is_bicc(path: str) -> bool:
     return path.startswith("biacm/rest/meta/datastores/")
 
 
-def _bookmark_value(state: Dict[str, Any], stream: str, replication_key: str, start_date: str) -> str:
+def _bookmark_value(
+    state: Dict[str, Any], stream: str, replication_key: str, start_date: str
+) -> str:
     return singer.get_bookmark(state, stream, replication_key, start_date)
 
 
-def _write_bookmark(state: Dict[str, Any], stream: str, replication_key: str, value: str) -> Dict[str, Any]:
+def _write_bookmark(
+    state: Dict[str, Any], stream: str, replication_key: str, value: str
+) -> Dict[str, Any]:
     return singer.write_bookmark(state, stream, replication_key, value)
 
 
@@ -206,7 +218,8 @@ def _build_incremental_query(
     return {"q": query_expression}
 
 
-def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, Any]) -> None:
+def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, Any]) -> None:  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    """Run the sync loop for all selected streams."""
     if not _state_is_valid(state):
         raise RuntimeError("Invalid state format. 'bookmarks' must be an object.")
 
@@ -246,7 +259,8 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             if not path:
                 raise RuntimeError(
                     f"Could not resolve Oracle path for stream {stream_name}. "
-                    "Run discovery with matching config or provide stream/resource overrides in config."
+                    "Run discovery with matching config or provide "
+                    "stream/resource overrides in config."
                 )
             params: Dict[str, Any] = {}
 
@@ -303,7 +317,8 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                 except ExtractError as err:
                     if _is_unsupported_datastore_create_job_error(err):
                         LOGGER.warning(
-                            "Skipping stream=%s datastore=%s due to unsupported Oracle BICC create-job constraint: %s",
+                            "Skipping stream=%s datastore=%s due to unsupported "
+                            "Oracle BICC create-job constraint: %s",
                             stream_name,
                             datastore,
                             err,

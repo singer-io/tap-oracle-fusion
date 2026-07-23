@@ -1,3 +1,4 @@
+"""Oracle Fusion tap entry point: discover and sync modes."""
 import json
 import sys
 

@@ -69,7 +69,7 @@ class TestOracleClient(unittest.TestCase):
             ]
         }
 
-        path, query = OracleClient._parse_next_link(payload)
+        path, query = OracleClient.parse_next_link(payload)
         self.assertEqual(path, "hcmRestApi/resources/11.13.18.05/Workers")
         self.assertEqual(query, {"limit": "50", "offset": "50"})
 
