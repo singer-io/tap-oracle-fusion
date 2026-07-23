@@ -1,3 +1,4 @@
+"""HTTP client for Oracle Fusion REST APIs with retry and pagination support."""
 import time
 from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
@@ -120,6 +121,7 @@ class OracleClient:
         giveup=_should_give_up,
     )
     def get(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+        """Perform an authenticated GET request with backoff retry and return the JSON payload."""
         url = f"{self.base_url}/{path.lstrip('/')}"
         LOGGER.info("Oracle request: %s params=%s", url, params or {})
 
@@ -139,6 +141,7 @@ class OracleClient:
 
     @staticmethod
     def _extract_records(payload: Mapping[str, Any]) -> list:
+        """Extract the records list from common Oracle response envelope keys."""
         for key in ("items", "data", "dataStores", "datastores", "results"):
             records = payload.get(key)
             if isinstance(records, list):
@@ -146,7 +149,8 @@ class OracleClient:
         return []
 
     @staticmethod
-    def _parse_next_link(payload: Mapping[str, Any]) -> Optional[Tuple[str, Dict[str, Any]]]:
+    def parse_next_link(payload: Mapping[str, Any]) -> Optional[Tuple[str, Dict[str, Any]]]:
+        """Parse a next-page link from Oracle REST pagination metadata in the payload."""
         links = payload.get("links")
         if not isinstance(links, list):
             return None
@@ -168,7 +172,9 @@ class OracleClient:
 
         return None
 
-    def get_records(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Iterator[Dict[str, Any]]:
+    def get_records(
+        self, path: str, params: Optional[Mapping[str, Any]] = None
+    ) -> Iterator[Dict[str, Any]]:
         """Yield records from a collection endpoint using common Oracle pagination styles."""
         page_size = int(self.config.get("page_size", 100))
         current_path = path
@@ -184,14 +190,17 @@ class OracleClient:
                 if isinstance(record, dict):
                     yield record
 
-            next_link = self._parse_next_link(payload)
+            next_link = self.parse_next_link(payload)
             if next_link:
                 current_path, current_params = next_link
                 continue
 
             has_more = payload.get("hasMore")
             if isinstance(has_more, bool) and has_more:
-                next_offset = int(current_params.get("offset", 0)) + int(current_params.get("limit", page_size))
+                next_offset = (
+                    int(current_params.get("offset", 0))
+                    + int(current_params.get("limit", page_size))
+                )
                 current_params["offset"] = next_offset
                 continue
 

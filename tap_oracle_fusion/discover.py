@@ -1,3 +1,4 @@
+"""Discovery logic for Oracle Fusion BICC datastore catalog generation."""
 import re
 import threading
 import os
@@ -157,7 +158,7 @@ def _list_datastores(client: OracleClient, config: Mapping[str, Any]) -> List[An
         payload = client.get(path, params=params)
         entries.extend(_extract_datastore_entries(payload))
 
-        next_link = OracleClient._parse_next_link(payload)
+        next_link = OracleClient.parse_next_link(payload)
         if next_link:
             path, params = next_link
             continue
@@ -186,7 +187,9 @@ def _list_discovery_candidates(client: OracleClient, config: Mapping[str, Any]) 
             continue
 
         lowered = datastore_name.lower()
-        if configured_parents and _extract_datastore_parent(datastore_name) not in configured_parents:
+        if configured_parents and (
+            _extract_datastore_parent(datastore_name) not in configured_parents
+        ):
             continue
         if configured_datastores and lowered not in configured_datastores:
             continue
@@ -217,8 +220,11 @@ def _load_datastore_detail(
     """Load datastore detail payload and return a skip reason when detail fetch fails."""
     try:
         return client.get(detail_path), None, False
-    except Exception as err:  # pragma: no cover - defensive logging branch
-        should_retry = not isinstance(err, OracleClientError) or err.retryable
+    except Exception as err:  # pragma: no cover - defensive logging branch  # pylint: disable=broad-exception-caught
+        if isinstance(err, OracleClientError):
+            should_retry = err.retryable
+        else:
+            should_retry = True
         LOGGER.warning(
             "Unable to fetch datastore detail for %s (%s).",
             datastore_name,
@@ -256,7 +262,7 @@ def _build_catalog_entry(
     )
 
 
-class BICCDiscoveryRunner:
+class BICCDiscoveryRunner:  # pylint: disable=too-many-instance-attributes
     """Class-based discovery runner for BICC datastore discovery."""
 
     def __init__(self, config: Mapping[str, Any]) -> None:
@@ -272,6 +278,7 @@ class BICCDiscoveryRunner:
         self._skipped_datastores: List[Tuple[str, str]] = []
 
     def _get_thread_client(self) -> OracleClient:
+        """Return a per-thread OracleClient, creating one on first access."""
         client = getattr(self._thread_local, "client", None)
         if client is None:
             client = OracleClient(self.config)
@@ -279,6 +286,7 @@ class BICCDiscoveryRunner:
         return client
 
     def list_candidates(self) -> List[str]:
+        """Return the list of datastore names to discover."""
         return _list_discovery_candidates(self.client, self.config)
 
     @staticmethod
@@ -310,7 +318,9 @@ class BICCDiscoveryRunner:
 
         return entry, False
 
-    def _build_entries_sequential(self, datastore_names: List[str]) -> Tuple[List[CatalogEntry], List[str]]:
+    def _build_entries_sequential(
+        self, datastore_names: List[str]
+    ) -> Tuple[List[CatalogEntry], List[str]]:
         entries: List[CatalogEntry] = []
         retry_candidates: List[str] = []
         for name in datastore_names:
@@ -325,7 +335,9 @@ class BICCDiscoveryRunner:
                     self._skipped_datastores.append((name, "non-retryable discovery failure"))
         return entries, retry_candidates
 
-    def _build_entries_threaded(self, datastore_names: List[str]) -> Tuple[List[CatalogEntry], List[str]]:
+    def _build_entries_threaded(
+        self, datastore_names: List[str]
+    ) -> Tuple[List[CatalogEntry], List[str]]:
         results: List[Optional[CatalogEntry]] = [None] * len(datastore_names)
         retry_candidates: List[str] = []
 
@@ -379,6 +391,7 @@ class BICCDiscoveryRunner:
         )
 
     def discover(self) -> Catalog:
+        """Run discovery and return a Singer Catalog with all found BICC streams."""
         datastore_names = self.list_candidates()
         self._total_count = len(datastore_names)
         self._processed_count = 0

@@ -1,3 +1,4 @@
+"""BICC extract client for Oracle Fusion ESS/UCM job submission and file retrieval."""
 import base64
 import csv
 import io
@@ -44,7 +45,10 @@ class ExtractError(Exception):
 
 
 class BICCExtractClient:
+    """Client that submits ESS jobs and retrieves BICC extract files via UCM."""
+
     def __init__(self, config: Mapping[str, Any]) -> None:
+        """Initialise from tap config."""
         self.base_url = str(config.get("base_url", "")).rstrip("/")
         self.username = str(config.get("username", ""))
         self.password = str(config.get("password", ""))
@@ -54,6 +58,7 @@ class BICCExtractClient:
 
     @staticmethod
     def datastore_slug(datastore: str) -> str:
+        """Return a filesystem-safe slug for a datastore name."""
         return datastore.strip().lower().replace(".", "_")
 
     def create_bicc_job(
@@ -62,6 +67,7 @@ class BICCExtractClient:
         initial_extract_date: str,
         job_name: Optional[str] = None,
     ) -> str:
+        """Create or reuse a BICC extract job and return its job ID."""
         name = job_name or f"file_{self.datastore_slug(datastore)}"
         job = {
             "name": name,
@@ -100,7 +106,7 @@ class BICCExtractClient:
         LOGGER.info("Created/reused BICC job name=%s id=%s datastore=%s", name, job_id, datastore)
         return job_id
 
-    def run_extract_to_rows(
+    def run_extract_to_rows(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         datastore: str,
         job_id: str,
@@ -109,6 +115,7 @@ class BICCExtractClient:
         ucm_poll_interval: int,
         ucm_max_attempts: int,
     ) -> Tuple[Iterator[Dict[str, str]], Dict[str, str]]:
+        """Submit an ESS extract job and yield CSV rows from the resulting UCM file."""
         pre_did = self.latest_did(datastore)
         request_id = self.submit(datastore, job_id)
         LOGGER.info(
@@ -137,6 +144,7 @@ class BICCExtractClient:
         }
 
     def _post(self, url: str, envelope: str) -> requests.Response:
+        """Send a SOAP/XML POST request and return the raw response."""
         return requests.post(
             url,
             data=envelope.encode("utf-8"),
@@ -145,16 +153,24 @@ class BICCExtractClient:
         )
 
     def submit(self, datastore: str, job_id: str) -> str:
-        resp = self._post(self.ess_url, _submit_envelope(self.base_url, self.username, self.password, datastore, job_id))
+        """Submit an ESS extract request and return the ESS request ID."""
+        resp = self._post(
+            self.ess_url,
+            _submit_envelope(
+                self.base_url, self.username, self.password, datastore, job_id
+            ),
+        )
         request_id = _submit_request_id(resp.text)
         if not request_id:
             fault = _text_by_local_name(resp.text, "faultstring")
             raise ExtractError(
-                f"submitRequest missing requestId. status={resp.status_code} fault={fault or 'none'}"
+                f"submitRequest missing requestId. "
+                f"status={resp.status_code} fault={fault or 'none'}"
             )
         return request_id
 
     def poll(self, request_id: str, poll_interval: int, max_polls: int) -> str:
+        """Poll ESS until a terminal state is reached and return the final state."""
         for attempt in range(1, max(max_polls, 1) + 1):
             resp = self._post(
                 self.ess_url,
@@ -172,6 +188,7 @@ class BICCExtractClient:
         raise ExtractError(f"ESS timed out after {max_polls} polls for request {request_id}")
 
     def _search_datastore_files(self, datastore: str) -> list[dict[str, str]]:
+        """Search UCM for extract files belonging to a datastore and return row dicts."""
         query_text = f"dDocTitle <starts> `file_{self.datastore_slug(datastore)}`"
         resp = self._post(
             self.ucm_url,
@@ -190,15 +207,20 @@ class BICCExtractClient:
         status = _document_field(root, "StatusCode")
         if status not in (None, "", "0"):
             raise ExtractError(
-                f"UCM search error StatusCode={status} StatusMessage={_document_field(root, 'StatusMessage')}"
+                f"UCM search error StatusCode={status} "
+                f"StatusMessage={_document_field(root, 'StatusMessage')}"
             )
         return _search_rows(root)
 
     def latest_did(self, datastore: str) -> int:
+        """Return the highest UCM dID seen for a datastore, or 0 if none found."""
         dids = [_as_int(r.get("dID")) for r in self._search_datastore_files(datastore)]
-        return max([d for d in dids if d is not None], default=0)
+        return max((d for d in dids if d is not None), default=0)
 
-    def find_file_id(self, datastore: str, max_attempts: int, poll_interval: int, min_did: int = 0) -> str:
+    def find_file_id(
+        self, datastore: str, max_attempts: int, poll_interval: int, min_did: int = 0
+    ) -> str:
+        """Poll UCM until a new extract file appears above min_did and return its dID."""
         for attempt in range(1, max(max_attempts, 1) + 1):
             rows = self._search_datastore_files(datastore)
             fresh = sorted(
@@ -222,6 +244,7 @@ class BICCExtractClient:
         )
 
     def download(self, file_id: str) -> bytes:
+        """Download a UCM file by its dID and return the raw bytes."""
         resp = self._post(
             self.ucm_url,
             _get_file_envelope(self.base_url, self.username, self.password, file_id),
@@ -269,7 +292,9 @@ def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
         raise ExtractError(f"UCM payload is not a valid zip: {err}") from err
 
 
-def _split_multipart(content: bytes, content_type: str) -> Optional[list[tuple[dict[str, str], bytes]]]:
+def _split_multipart(
+    content: bytes, content_type: str
+) -> Optional[list[tuple[dict[str, str], bytes]]]:
     match = re.search(r'boundary="?([^";]+)"?', content_type or "")
     if not match:
         return None
@@ -292,7 +317,9 @@ def _split_multipart(content: bytes, content_type: str) -> Optional[list[tuple[d
     return parts
 
 
-def _envelope_and_attachments(response: requests.Response) -> tuple[bytes, list[tuple[dict[str, str], bytes]]]:
+def _envelope_and_attachments(
+    response: requests.Response,
+) -> tuple[bytes, list[tuple[dict[str, str], bytes]]]:
     content_type = response.headers.get("Content-Type", "")
     parts = _split_multipart(response.content, content_type)
     if not parts:
@@ -392,6 +419,7 @@ def _submit_request_id(xml_text: str) -> Optional[str]:
     return None
 
 
+# pylint: disable=line-too-long
 def _soap_header(action_url: str, username: str, password: str) -> str:
     created = _utc_now_iso()
     expires = _utc_plus_seconds_iso(120)
