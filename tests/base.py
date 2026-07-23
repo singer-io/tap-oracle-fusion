@@ -5,10 +5,10 @@ Credentials are read from environment variables:
     TAP_ORACLE_FUSION_USERNAME   - Basic-auth username
     TAP_ORACLE_FUSION_PASSWORD   - Basic-auth password
 
-All 10 selected streams are BICC datastores.  BICC syncs write a
-``bicc_job_id`` entry to state (not a replication-key value), so tests
-that rely on standard bookmark state must account for this difference
-(see test_bookmark.py for the custom implementation).
+All 10 selected streams are BICC datastores sourced from catalog_500.json.
+BICC syncs write a ``bicc_job_id`` entry to state (not a replication-key
+value), so tests that rely on standard bookmark state must account for this
+difference (see test_bookmark.py for the custom implementation).
 """
 
 import os
@@ -20,8 +20,9 @@ class OracleFusionBaseTest(BaseCase):
     """Setup expectations for tap-oracle-fusion integration test sub-classes.
 
     Provides tap-specific metadata for the 10 representative datastores
-    selected for integration testing.  Additional datastores can be added
-    to ``expected_metadata()`` with minimal effort.
+    selected for integration testing.  All streams are sourced from
+    catalog_500.json.  Additional datastores can be added to
+    ``expected_metadata()`` with minimal effort.
     """
 
     # Default start date used across all test classes.
@@ -58,7 +59,7 @@ class OracleFusionBaseTest(BaseCase):
         classes can override it (e.g. StartDateTest sets two different dates).
 
         The ``streams`` key limits discovery to the 10 selected datastores so
-        the test does not trigger a full discovery run across ~1 600 datastores.
+        the test does not trigger a full discovery run across all datastores.
         """
         return {
             "base_url": os.getenv("TAP_ORACLE_FUSION_BASE_URL", ""),
@@ -75,12 +76,6 @@ class OracleFusionBaseTest(BaseCase):
     def expected_metadata(cls):
         """Expected stream names and their Singer / tap-tester metadata.
 
-        10 streams selected to cover:
-          - AR Receivables  (INCREMENTAL, single PK)
-          - XLA Subledger   (INCREMENTAL, compound PKs)
-          - FA Fixed Assets (INCREMENTAL, compound PKs)
-          - Service Request (INCREMENTAL, single PK)
-          - Extensibility   (FULL_TABLE,  no PKs)
 
         ``OBEYS_START_DATE`` is False for all BICC streams because BICC
         extracts are gated by ``initial_extract_date`` in the tap config,
@@ -88,92 +83,81 @@ class OracleFusionBaseTest(BaseCase):
         """
         return {
             # ------------------------------------------------------------------
-            # Accounts Receivable — INCREMENTAL
+            # Purchase Orders — INCREMENTAL, single PK
             # ------------------------------------------------------------------
-            "fscmtopmodelam_finextractam_arbiccextractam_salescredittypeextractpvo": {
-                cls.PRIMARY_KEYS: {"ArSalesCreditTypeSalesCreditTypeId"},
+            "fscmtopmodelam_prcpopublicviewam_standardheaderpvo": {
+                cls.PRIMARY_KEYS: {"PoHeaderId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"ArSalesCreditTypeLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"POSystemParametersLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
-            "fscmtopmodelam_finextractam_arbiccextractam_transactionhistoryallextractpvo": {
-                cls.PRIMARY_KEYS: {"TransactionHistoryAllTransactionHistoryId"},
+            "fscmtopmodelam_prcpopublicviewam_standardlinepvo": {
+                cls.PRIMARY_KEYS: {"PoLineId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"TransactionHistoryAllLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"FromBlanketDocumentTypeLastUpdateDate"},
+                cls.OBEYS_START_DATE: False,
+            },
+            "fscmtopmodelam_prcpopublicviewam_standardshipmentpvo": {
+                cls.PRIMARY_KEYS: {"LineLocationId"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"AuctionHeaderLastUpdateDate"},
+                cls.OBEYS_START_DATE: False,
+            },
+            "fscmtopmodelam_prcpopublicviewam_standarddistributionpvo": {
+                cls.PRIMARY_KEYS: {"PoDistributionId"},
+                cls.REPLICATION_METHOD: cls.INCREMENTAL,
+                cls.REPLICATION_KEYS: {"FromBlanketDocumentTypeLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
             # ------------------------------------------------------------------
-            # XLA Subledger Journal — INCREMENTAL, compound PKs
+            # Purchasing Document Type — INCREMENTAL, compound PK (4 fields)
             # ------------------------------------------------------------------
-            "fscmtopmodelam_finextractam_xlabiccextractam_subledgerjournalheaderextractpvo": {
+            "fscmtopmodelam_prcpopublicviewam_purchasingdocumenttypebp": {
                 cls.PRIMARY_KEYS: {
-                    "JournalEntryHeaderAeHeaderId",
-                    "JournalEntryHeaderApplicationId",
+                    "DocumentSubtype",
+                    "DocumentTypeCode",
+                    "PODocumentTypeTransLanguage",
+                    "PrcBuId",
                 },
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"JournalEntryHeaderLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"PODocumentTypeLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
-            "fscmtopmodelam_finextractam_xlabiccextractam_subledgerjournallineextractpvo": {
-                cls.PRIMARY_KEYS: {
-                    "JournalEntryLineAeHeaderId",
-                    "JournalEntryLineAeLineNum",
-                    "JournalEntryLineApplicationId",
-                },
+            # ------------------------------------------------------------------
+            # Finance — Legal Entity & Ledger — INCREMENTAL, single PK
+            # ------------------------------------------------------------------
+            "fscmtopmodelam_finlelegalentitiesam_legalentitypvo": {
+                cls.PRIMARY_KEYS: {"LegalEntityId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"JournalEntryLineLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"LegalEntityLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
-            "fscmtopmodelam_finextractam_xlabiccextractam_subledgerjournaldistributionextractpvo": {
-                cls.PRIMARY_KEYS: {
-                    "JournalEntryDistributionAeHeaderId",
-                    "JournalEntryDistributionApplicationId",
-                    "JournalEntryDistributionRefAeHeaderId",
-                    "JournalEntryDistributionTempLineNum",
-                },
+            "fscmtopmodelam_finglledgerdefnam_ledgerpvo": {
+                cls.PRIMARY_KEYS: {"LedgerId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"JournalEntryDistributionLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"LedgerLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
             # ------------------------------------------------------------------
-            # Fixed Assets — INCREMENTAL, compound PKs
+            # Requisitions — INCREMENTAL, single PK
             # ------------------------------------------------------------------
-            "fscmtopmodelam_finextractam_fabiccextractam_bookcontrolextractpvo": {
-                cls.PRIMARY_KEYS: {"BookControlBookTypeCode"},
+            "fscmtopmodelam_prcporpublicviewam_requisitionlinep1": {
+                cls.PRIMARY_KEYS: {"RequisitionLineId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"BookControlLastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            "fscmtopmodelam_finextractam_fabiccextractam_booksummaryextractpvo": {
-                cls.PRIMARY_KEYS: {
-                    "BookSummaryAssetId",
-                    "BookSummaryBookTypeCode",
-                    "BookSummaryPeriodCounter",
-                },
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"BookSummaryLastUpdateDate"},
+                cls.REPLICATION_KEYS: {"EffectiveStartDate"},
                 cls.OBEYS_START_DATE: False,
             },
             # ------------------------------------------------------------------
-            # Service Request — INCREMENTAL
+            # Lookup tables — FULL_TABLE
             # ------------------------------------------------------------------
-            "fscmtopmodelam_servicerequestam_servicerequestanalyticspvounsecured": {
-                cls.PRIMARY_KEYS: {"SrId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"LastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            # ------------------------------------------------------------------
-            # Extensibility custom objects — FULL_TABLE, no PKs
-            # ------------------------------------------------------------------
-            "fscmtopmodelam_fscmanalyticsextensibilityam_task_c": {
-                cls.PRIMARY_KEYS: set(),
+            "fscmtopmodelam_prcpopublicviewam_ordertypepurchasinglookuppvo": {
+                cls.PRIMARY_KEYS: {"LookupCode", "LookupType"},
                 cls.REPLICATION_METHOD: cls.FULL_TABLE,
                 cls.REPLICATION_KEYS: set(),
                 cls.OBEYS_START_DATE: False,
             },
-            "fscmtopmodelam_fscmanalyticsextensibilityam_projectstatus_c": {
-                cls.PRIMARY_KEYS: set(),
+            "fscmtopmodelam_prcpopublicviewam_purchasingdocumentheaderpvo": {
+                cls.PRIMARY_KEYS: {"PoHeaderId"},
                 cls.REPLICATION_METHOD: cls.FULL_TABLE,
                 cls.REPLICATION_KEYS: set(),
                 cls.OBEYS_START_DATE: False,
@@ -190,20 +174,19 @@ class OracleFusionBaseTest(BaseCase):
 
         The mapping from tap_stream_id back to the original datastore name is
         captured in the ``tap-oracle-fusion.datastore-key`` metadata field.
-        This list is derived directly from the catalog so discovery is scoped to
-        only the 10 streams under test.
+        These values are sourced directly from catalog_500.json.
         """
         return [
-            "FscmTopModelAM.FinExtractAM.ArBiccExtractAM.SalesCreditTypeExtractPVO",
-            "FscmTopModelAM.FinExtractAM.ArBiccExtractAM.TransactionHistoryAllExtractPVO",
-            "FscmTopModelAM.FinExtractAM.XlaBiccExtractAM.SubledgerJournalHeaderExtractPVO",
-            "FscmTopModelAM.FinExtractAM.XlaBiccExtractAM.SubledgerJournalLineExtractPVO",
-            "FscmTopModelAM.FinExtractAM.XlaBiccExtractAM.SubledgerJournalDistributionExtractPVO",
-            "FscmTopModelAM.FinExtractAM.FaBiccExtractAM.BookControlExtractPVO",
-            "FscmTopModelAM.FinExtractAM.FaBiccExtractAM.BookSummaryExtractPVO",
-            "FscmTopModelAM.ServiceRequestAM.ServiceRequestAnalyticsPVOUnsecured",
-            "FscmTopModelAM.FscmAnalyticsExtensibilityAM.Task_c",
-            "FscmTopModelAM.FscmAnalyticsExtensibilityAM.ProjectStatus_c",
+            "FscmTopModelAM.PrcPoPublicViewAM.StandardHeaderPVO",
+            "FscmTopModelAM.PrcPoPublicViewAM.StandardLinePVO",
+            "FscmTopModelAM.PrcPoPublicViewAM.StandardShipmentPVO",
+            "FscmTopModelAM.PrcPoPublicViewAM.StandardDistributionPVO",
+            "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentTypeBP",
+            "FscmTopModelAM.FinLeLegalEntitiesAM.LegalEntityPVO",
+            "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
+            "FscmTopModelAM.PrcPorPublicViewAM.RequisitionLineP1",
+            "FscmTopModelAM.PrcPoPublicViewAM.OrderTypePurchasingLookupPVO",
+            "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentHeaderPVO",
         ]
 
     @classmethod
