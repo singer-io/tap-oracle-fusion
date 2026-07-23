@@ -93,6 +93,7 @@ class TestDiscoverHelpers(unittest.TestCase):
         _, mdata, primary_keys = schema_module.build_bicc_schema_and_metadata(
             entry,
             "biacm/rest/meta/datastores/FscmTopModelAM.CompositeKeyStore",
+            "FscmTopModelAM.CompositeKeyStore",
         )
 
         self.assertEqual(primary_keys, ["SetId", "ItemId"])
@@ -106,6 +107,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_get_stream_resource_map_uses_configured_datastores(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
         mock_client.get.return_value = {
             "dataStores": [
                 "Worker",
@@ -128,12 +130,13 @@ class TestDiscoverFlow(unittest.TestCase):
                 "worker_assignments": "biacm/rest/meta/datastores/Worker%20Assignments",
             },
         )
-        mock_client.get.assert_called_once_with("biacm/rest/meta/datastores")
+        mock_client.get.assert_called_once_with("biacm/rest/meta/datastores", params={"limit": 500, "offset": 0})
         mock_client_cls.assert_called_once_with(config)
 
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_discover_builds_catalog_entries_with_deduped_streams(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
 
         def _get_side_effect(path, params=None):
             if path == "biacm/rest/meta/datastores":
@@ -173,6 +176,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_discover_applies_discovery_limit(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
 
         def _get_side_effect(path, params=None):
             if path == "biacm/rest/meta/datastores":
@@ -195,6 +199,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_discover_skips_datastore_without_schema(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
 
         def _get_side_effect(path, params=None):
             if path == "biacm/rest/meta/datastores":
@@ -216,6 +221,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_discover_logs_skipped_datastore_summary(self, mock_client_cls, mock_logger):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
 
         def _get_side_effect(path, params=None):
             if path == "biacm/rest/meta/datastores":
@@ -243,6 +249,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_get_stream_resource_map_applies_parent_filter(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
         mock_client.get.return_value = {
             "dataStores": [
                 "FscmTopModelAM.Worker",
@@ -269,6 +276,7 @@ class TestDiscoverFlow(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
     def test_discover_parents_and_datastores_use_intersection(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
+        mock_client_cls.parse_next_link.return_value = None
 
         def _get_side_effect(path, params=None):
             if path == "biacm/rest/meta/datastores":
