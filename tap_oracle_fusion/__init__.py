@@ -3,7 +3,8 @@ import json
 import sys
 
 import singer
-from tap_oracle_fusion.discover import discover
+from tap_oracle_fusion.discover import discover, BICC_DATASTORES_PATH
+from tap_oracle_fusion.client import OracleClient, OracleClientError
 from tap_oracle_fusion.sync import sync
 
 LOGGER = singer.get_logger()
@@ -25,6 +26,18 @@ def do_discover(config):
     return catalog
 
 
+def do_connection_check(config):
+    """Verify API connectivity and credentials. Exit 0 on success, 1 on failure."""
+    try:
+        client = OracleClient(config)
+        client.get(BICC_DATASTORES_PATH, params={"limit": 1, "offset": 0})
+        LOGGER.info("Connection check passed")
+        sys.exit(0)
+    except OracleClientError as exc:
+        LOGGER.error("Connection check failed: %s", exc)
+        sys.exit(1)
+
+
 @singer.utils.handle_top_exception(LOGGER)
 def main():
     """
@@ -41,8 +54,7 @@ def main():
         sync(config=parsed_args.config, catalog=parsed_args.catalog, state=state)
         return
 
-    LOGGER.error("No mode selected. Use --discover or provide a catalog for sync.")
-    sys.exit(1)
+    do_connection_check(config=parsed_args.config)
 
 
 if __name__ == "__main__":

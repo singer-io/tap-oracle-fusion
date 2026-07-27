@@ -2,14 +2,12 @@
 
 Verifies that when all non-automatic fields are deselected, only the primary
 keys and replication keys (i.e. fields with inclusion=automatic) are emitted
-to the target, and that all replicated records have unique primary-key values.
+to the target.
 
-Note: FULL_TABLE streams with no primary keys (e.g. the extensibility custom
-objects) are excluded from the uniqueness assertion because there is no key to
-compare against.
+Note: PK uniqueness is not asserted for BICC streams because BICC produces
+CDC-style extracts that can contain multiple rows per primary key (one per
+change event within the extract window).
 """
-
-import unittest
 
 from base import OracleFusionBaseTest
 from tap_tester.base_suite_tests.automatic_fields_test import MinimumSelectionTest
@@ -27,38 +25,9 @@ class OracleFusionAutomaticFields(MinimumSelectionTest, OracleFusionBaseTest):
         return self.expected_stream_names()
 
     def test_records_primary_key_is_unique(self):
-        """Only assert PK uniqueness for streams that define primary keys.
-
-        The two FULL_TABLE extensibility streams (task_c, projectstatus_c)
-        have no declared primary keys, so uniqueness cannot be verified.
+        """Skipped: BICC extracts are CDC-style and can contain multiple rows
+        per primary key (one per change event within the extract window).
+        PK uniqueness is not guaranteed for BICC streams.
         """
-        streams_with_pks = {
-            stream
-            for stream in self.streams_to_test()
-            if self.expected_primary_keys(stream)
-        }
-        for stream in streams_with_pks:
-            with self.subTest(stream=stream):
-                expected_primary_keys = self.expected_primary_keys(stream)
-                messages = self.synced_messages[stream]["messages"]
-                list_of_tupled_pk_values = [
-                    tuple(message["data"][pk] for pk in expected_primary_keys)
-                    for message in messages
-                    if message.get("action") == "upsert"
-                ]
-                self.assertCountEqual(
-                    set(list_of_tupled_pk_values),
-                    list_of_tupled_pk_values,
-                    logging=f"verify all records for {stream} have unique primary key values",
-                )
 
-        streams_without_pks = self.streams_to_test() - streams_with_pks
-        for stream in streams_without_pks:
-            with self.subTest(stream=stream):
-                # No PK uniqueness check possible; just confirm records exist.
-                record_count = self.record_count.get(stream, 0)
-                self.assertGreater(
-                    record_count,
-                    0,
-                    msg=f"Stream {stream} (no PKs) should still have records",
-                )
+

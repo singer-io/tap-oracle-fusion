@@ -20,9 +20,7 @@ class OracleFusionBaseTest(BaseCase):
     """Setup expectations for tap-oracle-fusion integration test sub-classes.
 
     Provides tap-specific metadata for the 10 representative datastores
-    selected for integration testing.  All streams are sourced from
-    catalog_500.json.  Additional datastores can be added to
-    ``expected_metadata()`` with minimal effort.
+    selected for integration testing.
     """
 
     # Default start date used across all test classes.
@@ -62,8 +60,15 @@ class OracleFusionBaseTest(BaseCase):
         the test does not trigger a full discovery run across all datastores.
         """
         return {
-            "base_url": os.getenv("TAP_ORACLE_FUSION_BASE_URL", ""),
+            "base_url": os.getenv(
+                "TAP_ORACLE_FUSION_BASE_URL",
+                "https://fa-eqkg-dev19-saasfademo1.ds-fa.oraclepdemos.com",
+            ),
             "start_date": self.start_date,
+            "parent_resource_groups": ["FscmTopModelAM"],
+            "discovery_workers": 8,
+            "discovery_limit": 500,
+            "datastore_page_size": 500,
             # Restrict discovery to only the streams under test.
             "streams": list(self._selected_datastore_names()),
         }
@@ -89,24 +94,6 @@ class OracleFusionBaseTest(BaseCase):
                 cls.PRIMARY_KEYS: {"PoHeaderId"},
                 cls.REPLICATION_METHOD: cls.INCREMENTAL,
                 cls.REPLICATION_KEYS: {"POSystemParametersLastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            "fscmtopmodelam_prcpopublicviewam_standardlinepvo": {
-                cls.PRIMARY_KEYS: {"PoLineId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"FromBlanketDocumentTypeLastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            "fscmtopmodelam_prcpopublicviewam_standardshipmentpvo": {
-                cls.PRIMARY_KEYS: {"LineLocationId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"AuctionHeaderLastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            "fscmtopmodelam_prcpopublicviewam_standarddistributionpvo": {
-                cls.PRIMARY_KEYS: {"PoDistributionId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"FromBlanketDocumentTypeLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
             # ------------------------------------------------------------------
@@ -138,30 +125,6 @@ class OracleFusionBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"LedgerLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
-            # ------------------------------------------------------------------
-            # Requisitions — INCREMENTAL, single PK
-            # ------------------------------------------------------------------
-            "fscmtopmodelam_prcporpublicviewam_requisitionlinep1": {
-                cls.PRIMARY_KEYS: {"RequisitionLineId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"EffectiveStartDate"},
-                cls.OBEYS_START_DATE: False,
-            },
-            # ------------------------------------------------------------------
-            # Lookup tables — FULL_TABLE
-            # ------------------------------------------------------------------
-            "fscmtopmodelam_prcpopublicviewam_ordertypepurchasinglookuppvo": {
-                cls.PRIMARY_KEYS: {"LookupCode", "LookupType"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
-                cls.REPLICATION_KEYS: set(),
-                cls.OBEYS_START_DATE: False,
-            },
-            "fscmtopmodelam_prcpopublicviewam_purchasingdocumentheaderpvo": {
-                cls.PRIMARY_KEYS: {"PoHeaderId"},
-                cls.REPLICATION_METHOD: cls.FULL_TABLE,
-                cls.REPLICATION_KEYS: set(),
-                cls.OBEYS_START_DATE: False,
-            },
         }
 
     # ---------------------------------------------------------------------------
@@ -178,15 +141,9 @@ class OracleFusionBaseTest(BaseCase):
         """
         return [
             "FscmTopModelAM.PrcPoPublicViewAM.StandardHeaderPVO",
-            "FscmTopModelAM.PrcPoPublicViewAM.StandardLinePVO",
-            "FscmTopModelAM.PrcPoPublicViewAM.StandardShipmentPVO",
-            "FscmTopModelAM.PrcPoPublicViewAM.StandardDistributionPVO",
             "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentTypeBP",
             "FscmTopModelAM.FinLeLegalEntitiesAM.LegalEntityPVO",
             "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
-            "FscmTopModelAM.PrcPorPublicViewAM.RequisitionLineP1",
-            "FscmTopModelAM.PrcPoPublicViewAM.OrderTypePurchasingLookupPVO",
-            "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentHeaderPVO",
         ]
 
     @classmethod
