@@ -13,7 +13,6 @@ REQUIRED_CONFIG_KEYS = [
     "base_url",
     "username",
     "password",
-    "start_date",
 ]
 
 

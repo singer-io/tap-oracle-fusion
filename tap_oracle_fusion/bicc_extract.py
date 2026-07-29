@@ -284,10 +284,19 @@ def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
         with ZipFile(io.BytesIO(payload), "r") as archive:
             members = archive.namelist()
             csv_names = [m for m in members if m.lower().endswith(".csv")] or members[:1]
+            # Oracle BICC can package both a full (seed) and an incremental (delta)
+            # extract in the same ZIP.  Deduplicate across all CSV files so that
+            # records appearing in more than one file are only yielded once.
+            seen: set = set()
             for csv_name in csv_names:
                 text = archive.read(csv_name).decode("utf-8-sig", errors="replace")
                 for row in csv.DictReader(io.StringIO(text)):
-                    yield {k: (v if v is not None else "") for k, v in row.items()}
+                    row_dict = {k: (v if v is not None else "") for k, v in row.items()}
+                    row_key = tuple(sorted(row_dict.items()))
+                    if row_key in seen:
+                        continue
+                    seen.add(row_key)
+                    yield row_dict
     except BadZipFile as err:
         raise ExtractError(f"UCM payload is not a valid zip: {err}") from err
 
