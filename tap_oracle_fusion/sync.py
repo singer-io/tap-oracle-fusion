@@ -1,5 +1,6 @@
 """Sync logic for Oracle Fusion REST and BICC datastore streams."""
 from datetime import datetime, timezone
+import hashlib
 from typing import Any, Dict, Mapping, Optional
 from urllib.parse import unquote
 
@@ -348,9 +349,10 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                     )
                     if stream_key_properties:
                         pk_tuple = tuple(record.get(pk) for pk in sorted(stream_key_properties))
-                        if pk_tuple in seen_bicc_pks:
+                        pk_hash = hashlib.sha256(repr(pk_tuple).encode()).digest()
+                        if pk_hash in seen_bicc_pks:
                             continue
-                        seen_bicc_pks.add(pk_tuple)
+                        seen_bicc_pks.add(pk_hash)
                 transformed_record = transformer.transform(
                     record,
                     stream_schema,
