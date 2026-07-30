@@ -271,7 +271,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                     state,
                     stream_name,
                     replication_key,
-                    str(config.get("start_date")),
+                    config.get("start_date", ""),
                 )
                 params.update(_build_incremental_query(replication_key, bookmark))
                 max_bookmark = bookmark
@@ -336,6 +336,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             else:
                 records_iter = client.get_records(path, params=params)
 
+            seen_bicc_pks: set = set()
             for record in records_iter:
                 if is_bicc_stream:
                     record = _normalize_record_keys_for_schema(record, schema_property_lookup)
@@ -345,6 +346,11 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         stream_name,
                         warned_invalid_datetime_values,
                     )
+                    if stream_key_properties:
+                        pk_tuple = tuple(record.get(pk) for pk in sorted(stream_key_properties))
+                        if pk_tuple in seen_bicc_pks:
+                            continue
+                        seen_bicc_pks.add(pk_tuple)
                 transformed_record = transformer.transform(
                     record,
                     stream_schema,
