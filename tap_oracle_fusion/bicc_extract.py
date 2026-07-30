@@ -1,6 +1,7 @@
 """BICC extract client for Oracle Fusion ESS/UCM job submission and file retrieval."""
 import base64
 import csv
+import hashlib
 import io
 import json
 import re
@@ -145,12 +146,21 @@ class BICCExtractClient:
 
     def _post(self, url: str, envelope: str) -> requests.Response:
         """Send a SOAP/XML POST request and return the raw response."""
-        return requests.post(
-            url,
-            data=envelope.encode("utf-8"),
-            headers={"Content-Type": "text/xml; charset=utf-8"},
-            timeout=self.timeout,
-        )
+        try:
+            return requests.post(
+                url,
+                data=envelope.encode("utf-8"),
+                headers={"Content-Type": "text/xml; charset=utf-8"},
+                timeout=self.timeout,
+            )
+        except requests.exceptions.Timeout as exc:
+            raise ExtractError(
+                f"SOAP request timed out after {self.timeout}s to {url}: {exc}"
+            ) from exc
+        except requests.exceptions.ConnectionError as exc:
+            raise ExtractError(
+                f"SOAP request connection error to {url}: {exc}"
+            ) from exc
 
     def submit(self, datastore: str, job_id: str) -> str:
         """Submit an ESS extract request and return the ESS request ID."""
@@ -280,6 +290,13 @@ class BICCExtractClient:
 
 
 def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
+    """Yield CSV row dicts from a ZIP payload held in memory.
+
+    Memory-efficient: streams each CSV entry row-by-row via TextIOWrapper instead
+    of decoding the full file into a string, and deduplicates across CSV files
+    using a compact SHA-256 hash set (32 bytes/entry) rather than storing full
+    row tuples.
+    """
     try:
         with ZipFile(io.BytesIO(payload), "r") as archive:
             members = archive.namelist()
@@ -287,16 +304,21 @@ def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
             # Oracle BICC can package both a full (seed) and an incremental (delta)
             # extract in the same ZIP.  Deduplicate across all CSV files so that
             # records appearing in more than one file are only yielded once.
+            # Store a SHA-256 digest (32 bytes) per row instead of the full row
+            # tuple to keep the seen-set memory footprint small.
             seen: set = set()
             for csv_name in csv_names:
-                text = archive.read(csv_name).decode("utf-8-sig", errors="replace")
-                for row in csv.DictReader(io.StringIO(text)):
-                    row_dict = {k: (v if v is not None else "") for k, v in row.items()}
-                    row_key = tuple(sorted(row_dict.items()))
-                    if row_key in seen:
-                        continue
-                    seen.add(row_key)
-                    yield row_dict
+                with archive.open(csv_name) as raw_fh:
+                    text_fh = io.TextIOWrapper(raw_fh, encoding="utf-8-sig", errors="replace")
+                    for row in csv.DictReader(text_fh):
+                        row_dict = {k: (v if v is not None else "") for k, v in row.items()}
+                        row_key = hashlib.sha256(
+                            repr(sorted(row_dict.items())).encode()
+                        ).digest()
+                        if row_key in seen:
+                            continue
+                        seen.add(row_key)
+                        yield row_dict
     except BadZipFile as err:
         raise ExtractError(f"UCM payload is not a valid zip: {err}") from err
 
@@ -309,20 +331,45 @@ def _split_multipart(
         return None
     boundary = ("--" + match.group(1)).encode()
     parts: list[tuple[dict[str, str], bytes]] = []
-    for chunk in content.split(boundary):
-        if chunk.startswith(b"\r\n"):
-            chunk = chunk[2:]
-        if chunk.endswith(b"\r\n"):
-            chunk = chunk[:-2]
-        if not chunk or chunk.startswith(b"--"):
+    mv = memoryview(content)
+
+    # Locate all boundary positions without splitting the buffer — this avoids
+    # creating multiple byte copies of the large binary payload (ZIP attachment).
+    # Each body is extracted as a single exact-size allocation via bytes(mv[s:e])
+    # rather than as a by-product of bytes.split() which clones every section.
+    pos = 0
+    boundary_positions: list[int] = []
+    while True:
+        idx = content.find(boundary, pos)
+        if idx == -1:
+            break
+        boundary_positions.append(idx)
+        pos = idx + 1
+
+    for i in range(len(boundary_positions) - 1):
+        part_start = boundary_positions[i] + len(boundary)
+        if content[part_start:part_start + 2] == b"\r\n":
+            part_start += 2
+        if content[part_start:part_start + 2] == b"--":
+            break  # final boundary marker ("--boundary--")
+
+        part_end = boundary_positions[i + 1]
+        if content[part_end - 2:part_end] == b"\r\n":
+            part_end -= 2
+
+        header_end = content.find(b"\r\n\r\n", part_start)
+        if header_end == -1 or header_end >= part_end:
             continue
-        head, _, body = chunk.partition(b"\r\n\r\n")
+
         headers: dict[str, str] = {}
-        for line in head.decode("latin1").split("\r\n"):
+        for line in bytes(mv[part_start:header_end]).decode("latin1").split("\r\n"):
             if ":" in line:
                 key, val = line.split(":", 1)
                 headers[key.strip().lower()] = val.strip()
-        parts.append((headers, body))
+
+        body_start = header_end + 4
+        parts.append((headers, bytes(mv[body_start:part_end])))
+
     return parts
 
 
