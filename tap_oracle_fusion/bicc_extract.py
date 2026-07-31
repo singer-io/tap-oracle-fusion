@@ -84,13 +84,22 @@ class BICCExtractClient:
                 }
             ],
         }
-        response = requests.put(
-            f"{self.base_url}/{JOBS_PATH}",
-            json=job,
-            auth=(self.username, self.password),
-            headers={"Accept": "application/json"},
-            timeout=self.timeout,
-        )
+        try:
+            response = requests.put(
+                f"{self.base_url}/{JOBS_PATH}",
+                json=job,
+                auth=(self.username, self.password),
+                headers={"Accept": "application/json"},
+                timeout=self.timeout,
+            )
+        except requests.exceptions.Timeout as exc:
+            raise ExtractError(
+                f"create-job timed out after {self.timeout}s: {exc}"
+            ) from exc
+        except requests.exceptions.ConnectionError as exc:
+            raise ExtractError(
+                f"create-job connection error: {exc}"
+            ) from exc
         try:
             body = response.json()
         except ValueError:
