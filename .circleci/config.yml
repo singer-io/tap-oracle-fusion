@@ -20,29 +20,24 @@ jobs:
             pylint tap_oracle_fusion -d C,R,W
       - add_ssh_keys
       - run:
-          name: "Unit Tests"
+          name: "Unit Tests & Coverage Run"
           command: |
             source /usr/local/share/virtualenvs/tap-oracle-fusion/bin/activate
             uv pip install pytest coverage
             mkdir -p test_output
             coverage run -m pytest tests/unittests --junitxml=test_output/report.xml
+      - run:
+          name: 'Coverage Report'
+          command: |
+            source /usr/local/share/virtualenvs/tap-oracle-fusion/bin/activate
+            coverage report -m --fail-under=99 | tee coverage.txt
             coverage html
       - store_test_results:
           path: test_output/report.xml
       - store_artifacts:
           path: htmlcov
-      - run:
-          name: 'Coverage Report'
-          command: |
-            source /usr/local/share/virtualenvs/tap-oracle-fusion/bin/activate
-            uv pip install pytest-cov
-            pytest --cov=tap_oracle_fusion --cov-report=term-missing --junitxml=test_output/all_tests.xml tests/unittests
-            coverage html
-          when: always
-      - store_test_results:
-          path: test_output
       - store_artifacts:
-          path: htmlcov
+          path: coverage.txt
       - run:
           name: "Integration Tests"
           command: |
