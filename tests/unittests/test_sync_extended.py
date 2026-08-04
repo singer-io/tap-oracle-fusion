@@ -79,6 +79,66 @@ class TestParseTimestamp(unittest.TestCase):
         self.assertIsNone(sync_module._parse_timestamp(12345))
 
 
+class TestSanitizeFloatValues(unittest.TestCase):
+    def test_finite_float_unchanged(self):
+        self.assertEqual(sync_module._sanitize_float_values(3.14), 3.14)
+
+    def test_nan_becomes_none(self):
+        self.assertIsNone(sync_module._sanitize_float_values(float("nan")))
+
+    def test_positive_inf_becomes_none(self):
+        self.assertIsNone(sync_module._sanitize_float_values(float("inf")))
+
+    def test_negative_inf_becomes_none(self):
+        self.assertIsNone(sync_module._sanitize_float_values(float("-inf")))
+
+    def test_non_float_scalar_unchanged(self):
+        self.assertEqual(sync_module._sanitize_float_values("hello"), "hello")
+        self.assertEqual(sync_module._sanitize_float_values(42), 42)
+        self.assertIsNone(sync_module._sanitize_float_values(None))
+        self.assertTrue(sync_module._sanitize_float_values(True))
+
+    def test_dict_sanitizes_values(self):
+        record = {"a": 1.5, "b": float("nan"), "c": float("inf"), "d": "ok"}
+        result = sync_module._sanitize_float_values(record)
+        self.assertEqual(result, {"a": 1.5, "b": None, "c": None, "d": "ok"})
+
+    def test_dict_keys_preserved(self):
+        record = {"x": float("-inf")}
+        result = sync_module._sanitize_float_values(record)
+        self.assertIn("x", result)
+        self.assertIsNone(result["x"])
+
+    def test_list_sanitizes_elements(self):
+        lst = [1.0, float("nan"), float("inf"), "text", None]
+        result = sync_module._sanitize_float_values(lst)
+        self.assertEqual(result, [1.0, None, None, "text", None])
+
+    def test_nested_dict_sanitizes_deeply(self):
+        record = {"outer": {"inner": float("nan"), "val": 2.0}}
+        result = sync_module._sanitize_float_values(record)
+        self.assertIsNone(result["outer"]["inner"])
+        self.assertEqual(result["outer"]["val"], 2.0)
+
+    def test_nested_list_in_dict(self):
+        record = {"items": [float("inf"), 1, float("nan")]}
+        result = sync_module._sanitize_float_values(record)
+        self.assertEqual(result["items"], [None, 1, None])
+
+    def test_empty_dict_returns_empty_dict(self):
+        self.assertEqual(sync_module._sanitize_float_values({}), {})
+
+    def test_empty_list_returns_empty_list(self):
+        self.assertEqual(sync_module._sanitize_float_values([]), [])
+
+    def test_result_is_json_serializable(self):
+        import json
+        record = {"a": float("nan"), "b": float("inf"), "c": 1.5, "d": [float("-inf"), 0]}
+        sanitized = sync_module._sanitize_float_values(record)
+        # should not raise
+        json.dumps(sanitized)
+
+
 class TestStateIsValid(unittest.TestCase):
     def test_empty_dict_is_valid(self):
         self.assertTrue(sync_module._state_is_valid({}))

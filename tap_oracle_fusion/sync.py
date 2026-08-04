@@ -1,7 +1,8 @@
 """Sync logic for Oracle Fusion REST and BICC datastore streams."""
 from datetime import datetime, timezone
 import hashlib
-from typing import Any, Dict, Mapping, Optional
+import math
+from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.parse import unquote
 
 import singer
@@ -17,6 +18,17 @@ from tap_oracle_fusion.discover import get_stream_resource_map
 from tap_oracle_fusion.schema import DATASTORE_KEY_METADATA_KEY, ENTITY_SET_METADATA_KEY
 
 LOGGER = singer.get_logger()
+
+
+def _sanitize_float_values(obj: Any) -> Any:
+    """Replace non-finite floats (nan/inf) with None for JSON compliance."""
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    if isinstance(obj, dict):
+        return {k: _sanitize_float_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_float_values(v) for v in obj]
+    return obj
 
 
 def _parse_timestamp(timestamp_value: Optional[str]) -> Optional[datetime]:
@@ -358,6 +370,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                     stream_schema,
                     stream_metadata,
                 )
+                transformed_record = _sanitize_float_values(transformed_record)
                 singer.write_record(stream_name, transformed_record)
                 record_count += 1
 
