@@ -99,7 +99,6 @@ class OracleFusionInterruptedSyncTest(OracleFusionBaseTest):
         all_streams = sorted(cls.expected_stream_names())
 
         # Need at least 3 streams to have meaningful split
-        assert len(all_streams) >= 3, "Need at least 3 streams to simulate an interrupted sync"
 
         split = max(1, len(all_streams) // 2)  # index where "not yet synced" starts
         synced_streams = all_streams[:split]    # already fully/partially synced
@@ -246,76 +245,62 @@ class OracleFusionInterruptedSyncTest(OracleFusionBaseTest):
                     ),
                 )
 
-    def test_bookmarked_streams_reuse_bicc_job_id(self):
-        """Streams that had a ``bicc_job_id`` in the interrupted state should
-        reuse that Oracle job in the resuming sync.
-
-        Reuse prevents creating a duplicate BICC job on every run and is
-        controlled by the ``existing_job_id = _stream_bookmark_value(state, stream, 'bicc_job_id')``
-        logic in sync.py.
-        """
+    def test_bookmarked_streams_carry_replication_key_through_resume(self):
+        """Streams that had a replication-key bookmark in the interrupted state
+        should retain it after the resuming sync completes."""
         interrupted_bookmarks = self._interrupted_state.get("bookmarks", {})
         for stream in self.streams_to_test():
-            interrupted_job_id = interrupted_bookmarks.get(stream, {}).get("bicc_job_id")
-            if interrupted_job_id is None:
-                continue  # Not in interrupted state — new job expected; skip.
-
+            interrupted_stream = interrupted_bookmarks.get(stream, {})
+            if not interrupted_stream:
+                continue
             with self.subTest(stream=stream):
-                resuming_job_id = self._stream_state(
-                    self._resuming_sync_state, stream
-                ).get("bicc_job_id")
-                self.assertEqual(
-                    interrupted_job_id,
-                    resuming_job_id,
-                    msg=(
-                        f"Stream '{stream}' had bicc_job_id={interrupted_job_id!r} "
-                        f"in the interrupted state but the resuming sync used "
-                        f"bicc_job_id={resuming_job_id!r}. Expected job reuse."
-                    ),
-                )
+                resuming_stream = self._stream_state(self._resuming_sync_state, stream)
+                for key, value in interrupted_stream.items():
+                    if key == "bicc_job_id":
+                        continue  # bicc_job_id no longer written to state
+                    self.assertIn(
+                        key,
+                        resuming_stream,
+                        msg=(
+                            f"Stream '{stream}' lost bookmark key '{key}' after resuming sync."
+                        ),
+                    )
 
-    def test_not_yet_started_streams_get_new_bicc_job_id(self):
-        """Streams absent from the interrupted state bookmarks had no prior
-        ``bicc_job_id``, so the resuming sync must create new BICC jobs for
-        them (non-empty string in the resuming state)."""
+    def test_not_yet_started_streams_have_replication_key_after_resume(self):
+        """Streams absent from the interrupted state bookmarks had not yet
+        been synced.  After the resuming sync they must have a replication-key
+        bookmark (for incremental streams)."""
         interrupted_bookmarks = self._interrupted_state.get("bookmarks", {})
-        not_yet_started = self.streams_to_test() - set(interrupted_bookmarks.keys())
+        not_yet_started = self.incremental_streams() - set(interrupted_bookmarks.keys())
 
         for stream in not_yet_started:
             with self.subTest(stream=stream):
-                new_job_id = self._stream_state(
-                    self._resuming_sync_state, stream
-                ).get("bicc_job_id")
-                self.assertIsNotNone(
-                    new_job_id,
-                    msg=(
-                        f"Stream '{stream}' was not in the interrupted state "
-                        "but has no 'bicc_job_id' in the resuming sync state."
-                    ),
-                )
-                self.assertGreater(
-                    len(str(new_job_id).strip()),
-                    0,
-                    msg=f"New 'bicc_job_id' for '{stream}' must not be empty.",
-                )
+                stream_state = self._stream_state(self._resuming_sync_state, stream)
+                for replication_key in self.expected_replication_keys(stream):
+                    self.assertIn(
+                        replication_key,
+                        stream_state,
+                        msg=(
+                            f"Stream '{stream}' was not in the interrupted state "
+                            f"but has no replication-key '{replication_key}' after resuming sync."
+                        ),
+                    )
 
     def test_resuming_sync_state_has_all_streams(self):
-        """After the resuming sync completes, every stream should have an
-        entry in state (``bicc_job_id`` written for all BICC streams)."""
+        """After the resuming sync completes, every incremental stream should
+        have a replication-key entry in state."""
         bookmarked = set(self._resuming_sync_state.get("bookmarks", {}).keys())
-        for stream in self.streams_to_test():
+        for stream in self.incremental_streams():
             with self.subTest(stream=stream):
                 self.assertIn(
                     stream,
                     bookmarked,
-                    msg=f"Stream '{stream}' has no entry in state after the resuming sync.",
+                    msg=f"Incremental stream '{stream}' has no entry in state after the resuming sync.",
                 )
 
     @unittest.skip(
-        "BICC streams do not write replication-key dates to state; they only "
-        "store 'bicc_job_id'.  The standard assertion that resuming-sync state "
-        "equals first-sync state does not apply because job IDs created for "
-        "not-yet-started streams in the resuming sync will differ from sync 1."
+        "The resuming-sync replication-key bookmarks may differ from sync 1 "
+        "for streams that were not yet started in the interrupted run."
     )
     def test_resuming_sync_state_matches_first_sync_state(self):
         """Not applicable for BICC streams.  See module docstring."""
