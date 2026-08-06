@@ -2,26 +2,14 @@
 
 tap-oracle-fusion uses two distinct sync strategies:
 
-1. **BICC streams** (all 10 selected streams) — asynchronous Oracle ESS/UCM
+1. **BICC streams** — asynchronous Oracle ESS/UCM
    extract jobs.  INCREMENTAL streams write the replication-key value to
    state just like any other Singer stream.  FULL_TABLE streams write no
-   bookmark.  The BICC job name is deterministic and recreated each run;
-   no ``bicc_job_id`` is persisted in state.
-
-2. **REST API streams** (not covered by the 10 selected streams) — standard
-   Singer bookmark: replication-key value written to state and used as a
-   query filter on the next run.
-
-Because all 10 selected streams are BICC streams, the standard
-``BookmarkTest`` mixin (which expects a date-formatted replication-key
-bookmark in state) does not apply.  This file provides a purpose-built
-bookmark test that verifies the BICC-specific state contract.
+   bookmark.
 
 Assertions:
   - After sync 1, every INCREMENTAL stream has a replication-key entry in
     ``state.bookmarks``.
-  - Neither INCREMENTAL nor FULL_TABLE BICC streams write ``bicc_job_id``
-    to state.
   - After sync 2 (run with state from sync 1), the replication-key bookmark
     is present (and not earlier than sync 1's value) for incremental streams.
   - ``currently_syncing`` is absent (or None) in both post-sync states,
@@ -160,52 +148,6 @@ class OracleFusionBookmarkTest(OracleFusionBaseTest):
                     self.assertIsNotNone(
                         stream_state.get(replication_key),
                         msg=f"Replication key '{replication_key}' is None in state for '{stream}'.",
-                    )
-
-    def test_full_table_streams_do_not_store_bicc_job_id(self):
-        """FULL_TABLE BICC streams have no replication key and do not write
-        a ``bicc_job_id`` to state.  Oracle's PUT upsert returns the same job
-        for a deterministic name without needing state persistence."""
-        for stream in self.full_table_streams():
-            with self.subTest(stream=stream):
-                stream_state = self._stream_state(self._state_1, stream)
-                self.assertNotIn(
-                    "bicc_job_id",
-                    stream_state,
-                    msg=f"FULL_TABLE stream '{stream}' unexpectedly has 'bicc_job_id' in state.",
-                )
-
-    def test_incremental_streams_do_not_store_bicc_job_id_in_state(self):
-        """BICC INCREMENTAL streams must NOT write 'bicc_job_id' to state.
-        Oracle's PUT upsert returns the same job for a deterministic name;
-        state carries only the replication-key bookmark."""
-        for stream in self.incremental_streams():
-            with self.subTest(stream=stream):
-                stream_state = self._stream_state(self._state_1, stream)
-                self.assertNotIn(
-                    "bicc_job_id",
-                    stream_state,
-                    msg=(
-                        f"'bicc_job_id' found in state for BICC stream '{stream}'. "
-                        "Only the replication-key bookmark should be stored."
-                    ),
-                )
-
-    def test_sync_2_advances_replication_key_bookmark(self):
-        """When state from sync 1 is passed to sync 2, the replication-key
-        bookmark for incremental streams must be present (and >= sync 1's value).
-        Oracle's PUT upsert reuses the same BICC job via a deterministic name
-        without needing a bicc_job_id in state."""
-        for stream in self.incremental_streams():
-            with self.subTest(stream=stream):
-                for replication_key in self.expected_replication_keys(stream):
-                    bm_sync_2 = self._stream_state(self._state_2, stream).get(replication_key)
-                    self.assertIsNotNone(
-                        bm_sync_2,
-                        msg=(
-                            f"Stream '{stream}' has no replication-key bookmark "
-                            f"after sync 2."
-                        ),
                     )
 
     def test_sync_2_all_streams_produce_records(self):

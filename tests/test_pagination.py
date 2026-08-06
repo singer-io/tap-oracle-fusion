@@ -6,19 +6,6 @@ the tap streams rows directly from the downloaded file without a client-side
 offset/limit loop.  Consequently the standard ``PaginationTest`` mixin
 (which requires ``API_LIMIT`` in metadata and asserts record count >
 page size) does not apply to BICC streams.
-
-This test instead verifies the properties that ARE meaningful for BICC
-extracts:
-
-1. **Non-empty extracts** — every selected stream emits at least one record.
-2. **No duplicate records** — for streams with declared primary keys, every
-   record tuple (pk fields) is unique across the entire extract.
-3. **Schema conformance** — every record contains the fields declared in the
-   Singer SCHEMA message for that stream.
-
-If REST API streams are added to the test suite in the future, the standard
-``PaginationTest`` mixin should be used for those streams (with ``API_LIMIT``
-defined in ``expected_metadata()``).
 """
 
 import unittest

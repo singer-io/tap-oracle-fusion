@@ -5,10 +5,9 @@ Credentials are read from environment variables:
     TAP_ORACLE_FUSION_USERNAME   - Basic-auth username
     TAP_ORACLE_FUSION_PASSWORD   - Basic-auth password
 
-All 10 selected streams are BICC datastores sourced from catalog_500.json.
+All selected streams are BICC datastores sourced.
 BICC INCREMENTAL streams write a standard Singer replication-key bookmark to
-state.  BICC FULL_TABLE streams write no bookmark.  The BICC job name is
-deterministic and recreated each run; no job ID is persisted in state.
+state.
 """
 
 import os

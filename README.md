@@ -41,10 +41,6 @@ Sample config:
 	"password": "your_password",
 	"start_date": "2020-01-01T00:00:00Z",
 	"parent_resource_groups": ["CrmAnalyticsAM"],
-	"bicc_job_id": "1",
-	"bicc_enable_ess_sync": true,
-	"ess_poll_interval_seconds": 20,
-	"ess_max_polls": 30,
 	"page_size": 100,
 	"request_timeout": 300
 }
