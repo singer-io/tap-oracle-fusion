@@ -3,10 +3,10 @@
 tap-oracle-fusion uses two distinct sync strategies:
 
 1. **BICC streams** (all 10 selected streams) — asynchronous Oracle ESS/UCM
-   extract jobs.  After a successful sync the tap writes the BICC job's ID
-   (``bicc_job_id``) to state rather than a replication-key timestamp.  On
-   subsequent syncs the same job ID is reused so Oracle handles the
-   incremental cut-off on its side.
+   extract jobs.  INCREMENTAL streams write the replication-key value to
+   state just like any other Singer stream.  FULL_TABLE streams write no
+   bookmark.  The BICC job name is deterministic and recreated each run;
+   no ``bicc_job_id`` is persisted in state.
 
 2. **REST API streams** (not covered by the 10 selected streams) — standard
    Singer bookmark: replication-key value written to state and used as a
@@ -18,12 +18,12 @@ bookmark in state) does not apply.  This file provides a purpose-built
 bookmark test that verifies the BICC-specific state contract.
 
 Assertions:
-  - After sync 1, every selected stream has an entry in ``state.bookmarks``.
-  - INCREMENTAL BICC streams have a non-empty ``bicc_job_id`` string in state.
-  - FULL_TABLE BICC streams also receive a ``bicc_job_id`` (the job was created
-    or reused during the extract).
-  - After sync 2 (run with state from sync 1), the ``bicc_job_id`` is
-    preserved or updated — the sync completes without error.
+  - After sync 1, every INCREMENTAL stream has a replication-key entry in
+    ``state.bookmarks``.
+  - Neither INCREMENTAL nor FULL_TABLE BICC streams write ``bicc_job_id``
+    to state.
+  - After sync 2 (run with state from sync 1), the replication-key bookmark
+    is present (and not earlier than sync 1's value) for incremental streams.
   - ``currently_syncing`` is absent (or None) in both post-sync states,
     indicating a clean run.
 """

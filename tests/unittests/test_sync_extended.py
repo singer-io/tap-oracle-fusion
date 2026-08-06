@@ -504,6 +504,54 @@ class TestSyncBiccStream(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
     @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
     @mock.patch("tap_oracle_fusion.sync.OracleClient")
+    def test_bicc_stream_pk_deduplication_keeps_first_on_value_change(
+        self, _client_cls, mock_bicc_cls, _ws, mock_wr, _wstate
+    ):
+        """Same PK but DIFFERENT values: dedup still keeps only the first row.
+
+        This documents a known limitation: if BICC legitimately emits multiple
+        change events for the same PK in a single extract (e.g. the row was
+        updated twice within the extract window), only the first event is
+        emitted and the later update is silently dropped.  If Oracle BICC
+        guarantees at-most-one row per PK per extract, this behavior is safe;
+        if it does not, downstream data may be stale.
+        """
+        mock_bicc = mock_bicc_cls.return_value
+        mock_bicc.create_bicc_job.return_value = "job-1"
+        mock_bicc.run_extract_to_rows.return_value = (
+            iter([
+                {"Id": "1", "Name": "Alice"},   # first event
+                {"Id": "1", "Name": "Alice_v2"}, # later update — same PK, different value
+            ]),
+            {"state": "SUCCEEDED"},
+        )
+
+        schema_dict = {
+            "type": "object",
+            "properties": {
+                "Id": {"type": ["null", "string"]},
+                "Name": {"type": ["null", "string"]},
+            },
+        }
+        entry = _make_entry(
+            "worker",
+            oracle_path="biacm/rest/meta/datastores/FscmTopModelAM.Worker",
+            datastore_key="FscmTopModelAM.Worker",
+            key_properties=["Id"],
+            schema_dict=schema_dict,
+        )
+        catalog = _make_catalog(entry)
+        sync_module.sync({"base_url": "https://example"}, catalog, {})
+        # Only the first event survives; the later update is dropped.
+        self.assertEqual(mock_wr.call_count, 1)
+        emitted_record = mock_wr.call_args[0][1]
+        self.assertEqual(emitted_record.get("Name"), "Alice")
+
+    @mock.patch("tap_oracle_fusion.sync.singer.write_state")
+    @mock.patch("tap_oracle_fusion.sync.singer.write_record")
+    @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
+    @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
+    @mock.patch("tap_oracle_fusion.sync.OracleClient")
     def test_bicc_stream_uses_existing_job_id(
         self, _client_cls, mock_bicc_cls, _ws, _wr, _wstate
     ):

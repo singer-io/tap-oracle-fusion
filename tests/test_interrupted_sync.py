@@ -5,14 +5,17 @@ interrupted sync.
 
 Background — how Oracle Fusion BICC state works
 -------------------------------------------------
-After each stream syncs, the tap writes:
-    state["bookmarks"][stream_name]["bicc_job_id"] = "<oracle_job_id>"
+BICC INCREMENTAL streams write a standard Singer replication-key bookmark:
+    state["bookmarks"][stream_name][replication_key] = "<iso-timestamp>"
+
+BICC FULL_TABLE streams write no bookmark at all.  The BICC job name is
+deterministic and recreated on every run without needing a persisted job ID.
 
 An interrupted sync is represented by:
     state["currently_syncing"] = "<stream_name>"
     state["bookmarks"] = {
-        <already_synced_stream>: {"bicc_job_id": "..."},  # completed
-        <currently_syncing_stream>: {"bicc_job_id": "..."},  # partial
+        <already_synced_incremental>: {replication_key: "..."},  # completed
+        <currently_syncing_incremental>: {replication_key: "..."},  # partial
         # streams absent from bookmarks were not yet reached
     }
 
@@ -23,22 +26,19 @@ from ``currently_syncing`` so the tap picks up from the interrupted stream.
 Why the standard ``InterruptedSyncTest`` mixin does not apply
 -------------------------------------------------------------
 The mixin's ``test_bookmarked_streams_start_date`` and
-``test_resuming_sync_records`` assertions call
-``get_bookmark_value(manipulate_state(), stream)`` which looks for the
-replication-key date in state (e.g. ``state["bookmarks"][stream]["LastUpdateDate"]``).
-BICC streams do not write a replication-key date to state — only
-``bicc_job_id`` — so those lookups return ``None`` and the assertions fail.
-
-This custom test replaces the mixin with BICC-appropriate assertions.
+``test_resuming_sync_records`` assertions are tied to Stitch/Menagerie
+infrastructure helpers that do not apply to the local tap runner used here.
+This custom class provides equivalent assertions suited to the
+tap-oracle-fusion test environment.
 
 Assertions
 ----------
 - Resuming sync completes without ``currently_syncing`` remaining in state.
 - All selected streams appear in the resuming sync output.
-- Streams that were in the interrupted state bookmarks reuse their existing
-  ``bicc_job_id`` (Oracle job reuse).
-- Streams that were NOT in the interrupted state bookmarks (i.e. not yet
-  started) receive a new ``bicc_job_id`` in the resuming sync state.
+- Replication-key bookmarks present in the interrupted state are preserved
+  (or advanced) after the resuming sync.
+- Streams that were absent from the interrupted state bookmarks (not yet
+  started) have a replication-key bookmark after the resuming sync.
 - The stream set as ``currently_syncing`` appears in the resuming sync output,
   confirming the tap resumed from the correct position.
 """
@@ -87,8 +87,8 @@ class OracleFusionInterruptedSyncTest(OracleFusionBaseTest):
 
         Strategy:
           - Sort selected streams alphabetically to get a deterministic order.
-          - Mark the first half as already-synced (copy their ``bicc_job_id``
-            from sync-1 state).
+          - Mark the first half as already-synced (copy their replication-key
+            bookmark from sync-1 state).
           - Mark the last stream in the already-synced half as
             ``currently_syncing`` (partially completed).
           - Leave the remaining streams absent from bookmarks (not yet started).
@@ -256,8 +256,6 @@ class OracleFusionInterruptedSyncTest(OracleFusionBaseTest):
             with self.subTest(stream=stream):
                 resuming_stream = self._stream_state(self._resuming_sync_state, stream)
                 for key, value in interrupted_stream.items():
-                    if key == "bicc_job_id":
-                        continue  # bicc_job_id no longer written to state
                     self.assertIn(
                         key,
                         resuming_stream,

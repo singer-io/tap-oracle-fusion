@@ -6,9 +6,9 @@ Credentials are read from environment variables:
     TAP_ORACLE_FUSION_PASSWORD   - Basic-auth password
 
 All 10 selected streams are BICC datastores sourced from catalog_500.json.
-BICC syncs write a ``bicc_job_id`` entry to state (not a replication-key
-value), so tests that rely on standard bookmark state must account for this
-difference (see test_bookmark.py for the custom implementation).
+BICC INCREMENTAL streams write a standard Singer replication-key bookmark to
+state.  BICC FULL_TABLE streams write no bookmark.  The BICC job name is
+deterministic and recreated each run; no job ID is persisted in state.
 """
 
 import os
