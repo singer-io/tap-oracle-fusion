@@ -37,7 +37,11 @@ def _parse_timestamp(timestamp_value: Optional[str]) -> Optional[datetime]:
 
     normalized = timestamp_value.replace("Z", "+00:00")
     try:
-        return datetime.fromisoformat(normalized)
+        dt = datetime.fromisoformat(normalized)
+        # ensure timezone-aware so comparisons never mix naive and aware
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
     except ValueError:
         return None
 
@@ -194,18 +198,6 @@ def _is_unsupported_datastore_create_job_error(error: Exception) -> bool:
     )
 
 
-def _stream_bookmark_value(
-    state: Dict[str, Any], stream: str, key: str, default: Optional[str] = None
-) -> Optional[str]:
-    return singer.get_bookmark(state, stream, key, default)
-
-
-def _write_stream_bookmark(
-    state: Dict[str, Any], stream: str, key: str, value: str
-) -> Dict[str, Any]:
-    return singer.write_bookmark(state, stream, key, value)
-
-
 def _metadata_path_is_bicc(path: str) -> bool:
     return path.startswith("biacm/rest/meta/datastores/")
 
@@ -302,22 +294,15 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         f"Could not resolve BICC datastore name for stream {stream_name}."
                     )
                 try:
-                    existing_job_id = _stream_bookmark_value(state, stream_name, "bicc_job_id")
-                    create_new_job = force_full or not existing_job_id
-                    if create_new_job:
-                        job_name = f"file_{bicc_client.datastore_slug(datastore)}"
-                        if force_full:
-                            suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
-                            job_name = f"{job_name}__full_{suffix}"
-                        job_id = bicc_client.create_bicc_job(
-                            datastore=datastore,
-                            initial_extract_date=initial_extract_date,
-                            job_name=job_name,
-                        )
-                        state = _write_stream_bookmark(state, stream_name, "bicc_job_id", job_id)
-                        singer.write_state(state)
-                    else:
-                        job_id = str(existing_job_id)
+                    job_name = f"file_{bicc_client.datastore_slug(datastore)}"
+                    if force_full:
+                        suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+                        job_name = f"{job_name}__full_{suffix}"
+                    job_id = bicc_client.create_bicc_job(
+                        datastore=datastore,
+                        initial_extract_date=initial_extract_date,
+                        job_name=job_name,
+                    )
 
                     records_iter, _ = bicc_client.run_extract_to_rows(
                         datastore=datastore,
@@ -365,6 +350,13 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         if pk_hash in seen_bicc_pks:
                             continue
                         seen_bicc_pks.add(pk_hash)
+                    if replication_key and bookmark:
+                        record_replication_value = record.get(replication_key)
+                        if record_replication_value:
+                            record_ts = _parse_timestamp(record_replication_value)
+                            bookmark_ts = _parse_timestamp(bookmark)
+                            if record_ts and bookmark_ts and record_ts < bookmark_ts:
+                                continue
                 transformed_record = transformer.transform(
                     record,
                     stream_schema,
@@ -385,7 +377,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         elif not max_bookmark or record_replication_value > max_bookmark:
                             max_bookmark = record_replication_value
 
-            if replication_key and max_bookmark and not _metadata_path_is_bicc(path):
+            if replication_key and max_bookmark:
                 state = _write_bookmark(state, stream_name, replication_key, max_bookmark)
                 singer.write_state(state)
 

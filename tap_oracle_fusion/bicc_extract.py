@@ -70,6 +70,9 @@ class BICCExtractClient:
     ) -> str:
         """Create or reuse a BICC extract job and return its job ID."""
         name = job_name or f"file_{self.datastore_slug(datastore)}"
+        # Oracle BICC requires yyyy-MM-ddT00:00:00.000 — strip any existing time/tz then re-attach
+        date_part = initial_extract_date.replace("Z", "").replace("+00:00", "").split("T")[0]
+        normalized_date = f"{date_part}T00:00:00.000"
         job = {
             "name": name,
             "description": f"{datastore} extract (tap-oracle-fusion)",
@@ -77,7 +80,7 @@ class BICCExtractClient:
                 {
                     "dataStoreMeta": {
                         "dataStoreKey": datastore,
-                        "initialExtractDate": initial_extract_date,
+                        "initialExtractDate": normalized_date,
                     },
                     "groupNumber": 1,
                     "groupItemPriority": 1,

@@ -507,7 +507,10 @@ class TestSyncBiccStream(unittest.TestCase):
     def test_bicc_stream_uses_existing_job_id(
         self, _client_cls, mock_bicc_cls, _ws, _wr, _wstate
     ):
+        # bicc_job_id in state is no longer used; create_bicc_job is always called
+        # and Oracle's PUT upsert returns the same job ID for a deterministic name.
         mock_bicc = mock_bicc_cls.return_value
+        mock_bicc.create_bicc_job.return_value = "existing-job-999"
         mock_bicc.run_extract_to_rows.return_value = (iter([]), {"state": "SUCCEEDED"})
 
         entry = _make_entry(
@@ -518,7 +521,10 @@ class TestSyncBiccStream(unittest.TestCase):
         catalog = _make_catalog(entry)
         state = {"bookmarks": {"worker": {"bicc_job_id": "existing-job-999"}}}
         sync_module.sync({"base_url": "https://example"}, catalog, state)
-        mock_bicc.create_bicc_job.assert_not_called()
+        mock_bicc.create_bicc_job.assert_called_once()
+        # confirm the deterministic (non-force-full) job name was used
+        call_kwargs = mock_bicc.create_bicc_job.call_args[1]
+        self.assertNotIn("__full_", call_kwargs.get("job_name", ""))
 
     @mock.patch("tap_oracle_fusion.sync.singer.write_state")
     @mock.patch("tap_oracle_fusion.sync.singer.write_record")
