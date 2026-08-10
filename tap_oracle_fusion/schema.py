@@ -37,19 +37,6 @@ def _is_datetime_type(oracle_type: str) -> bool:
     return oracle_type in _DATETIME_TYPE_NAMES
 
 
-def _is_datetime_field(attribute_name: str, oracle_type: str) -> bool:
-    field_name = attribute_name.lower()
-    if _is_datetime_type(oracle_type):
-        return True
-    return (
-        field_name.endswith("date")
-        or field_name.endswith("time")
-        or field_name.endswith("datetime")
-        or field_name.endswith("_date")
-        or field_name.endswith("_time")
-    )
-
-
 def oracle_attribute_to_property_schema(attribute: Mapping[str, Any]) -> Dict[str, Any]:
     """Map an Oracle describe attribute to a JSON schema property."""
     attr_type = _normalize_type_name(str(attribute.get("type", "string")))
@@ -165,6 +152,13 @@ def build_bicc_schema_and_metadata(
     schema_dict = build_bicc_schema(detail_payload)
     primary_keys = infer_bicc_primary_keys(attributes)
     replication_key = infer_bicc_replication_key(attributes)
+
+    # Primary key columns that Oracle types as NUMERIC are IDs — use integer, not float.
+    properties = schema_dict.get("properties", {})
+    for pk in primary_keys:
+        prop = properties.get(pk)
+        if isinstance(prop, dict) and isinstance(prop.get("type"), list):
+            prop["type"] = ["integer" if t == "number" else t for t in prop["type"]]
 
     replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
     mdata = metadata.get_standard_metadata(

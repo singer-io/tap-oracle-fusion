@@ -260,7 +260,7 @@ class TestDiscoverFlow(unittest.TestCase):
 
         config = {
             "base_url": "https://example",
-            "parent_resource_groups": ["FscmTopModelAM", "HcmTopModelAnalyticsGlobalAM"],
+            "discovery_parents": ["FscmTopModelAM", "HcmTopModelAnalyticsGlobalAM"],
         }
 
         stream_map = discover_module.get_stream_resource_map(config)
@@ -294,7 +294,7 @@ class TestDiscoverFlow(unittest.TestCase):
         catalog = discover_module.discover(
             {
                 "base_url": "https://example",
-                "parent_resource_groups": ["FscmTopModelAM"],
+                "discovery_parents": ["FscmTopModelAM"],
                 "datastores": ["FscmTopModelAM.Target", "CrmAnalyticsAM.Target"],
             }
         )

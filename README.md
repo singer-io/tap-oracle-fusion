@@ -23,7 +23,7 @@ Required keys:
 Important optional keys:
 
 - datastores (or streams/resources): list of datastore names to include during discovery
-- parent_resource_groups (or discovery_parents): list of top-level datastore parents to include during discovery (for example: `FscmTopModelAM`, `CrmAnalyticsAM`). If set with `datastores`, both filters are applied.
+- discovery_parents: list of top-level datastore parents to include during discovery (for example: `FscmTopModelAM`, `CrmAnalyticsAM`). If set with `datastores`, both filters are applied.
 - discovery_limit: integer cap for number of datastores to process during discovery (useful for validation runs)
 - discovery_workers (or discovery_threads): number of concurrent workers for datastore detail discovery (`auto` or integer, default: auto, max: 128)
 - bicc_job_id (or job_id/extract_job_id): existing Oracle BICC Job ID required for ESS submitRequest (example: `1`)
@@ -40,7 +40,7 @@ Sample config:
 	"username": "your_username",
 	"password": "your_password",
 	"start_date": "2020-01-01T00:00:00Z",
-	"parent_resource_groups": ["CrmAnalyticsAM"],
+	"discovery_parents": ["CrmAnalyticsAM"],
 	"page_size": 100,
 	"request_timeout": 300
 }

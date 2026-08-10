@@ -9,7 +9,6 @@ from tap_oracle_fusion.schema import (
     _attribute_type,
     _coerce_attribute_payload,
     _extract_attributes,
-    _is_datetime_field,
     _is_datetime_type,
     _merge_types,
     _normalize_type_name,
@@ -48,30 +47,6 @@ class TestIsDatetimeType(unittest.TestCase):
     def test_non_datetime_types(self):
         for t in ("string", "integer", "number", "boolean"):
             self.assertFalse(_is_datetime_type(t))
-
-
-class TestIsDatetimeField(unittest.TestCase):
-    def test_datetime_oracle_type_true(self):
-        self.assertTrue(_is_datetime_field("SomeField", "date"))
-        self.assertTrue(_is_datetime_field("SomeField", "timestamp"))
-
-    def test_field_name_ends_with_date(self):
-        self.assertTrue(_is_datetime_field("LastUpdateDate", "string"))
-
-    def test_field_name_ends_with_time(self):
-        self.assertTrue(_is_datetime_field("CreatedTime", "string"))
-
-    def test_field_name_ends_with_datetime(self):
-        self.assertTrue(_is_datetime_field("UpdatedDateTime", "string"))
-
-    def test_field_name_ends_with_underscore_date(self):
-        self.assertTrue(_is_datetime_field("start_date", "string"))
-
-    def test_field_name_ends_with_underscore_time(self):
-        self.assertTrue(_is_datetime_field("end_time", "string"))
-
-    def test_no_match_returns_false(self):
-        self.assertFalse(_is_datetime_field("WorkerId", "string"))
 
 
 class TestOracleAttributeToPropertySchema(unittest.TestCase):

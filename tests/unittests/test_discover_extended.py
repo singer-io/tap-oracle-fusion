@@ -43,17 +43,17 @@ class TestIterConfiguredParents(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_string_splits_by_comma(self):
-        config = {"parent_resource_groups": "FscmTopModelAM, HcmTopModelAM"}
+        config = {"discovery_parents": "FscmTopModelAM, HcmTopModelAM"}
         result = list(discover_module._iter_configured_parents(config))
         self.assertEqual(result, ["FscmTopModelAM", "HcmTopModelAM"])
 
     def test_list_of_strings(self):
-        config = {"parent_resource_groups": ["FscmTopModelAM", "HcmTopModelAM"]}
+        config = {"discovery_parents": ["FscmTopModelAM", "HcmTopModelAM"]}
         result = list(discover_module._iter_configured_parents(config))
         self.assertEqual(result, ["FscmTopModelAM", "HcmTopModelAM"])
 
     def test_set_of_strings(self):
-        config = {"parent_resource_groups": {"FscmTopModelAM"}}
+        config = {"discovery_parents": {"FscmTopModelAM"}}
         result = list(discover_module._iter_configured_parents(config))
         self.assertEqual(result, ["FscmTopModelAM"])
 
@@ -63,21 +63,21 @@ class TestIterConfiguredParents(unittest.TestCase):
         self.assertEqual(result, ["FscmTopModelAM"])
 
     def test_other_type_returns_empty(self):
-        config = {"parent_resource_groups": 42}
+        config = {"discovery_parents": 42}
         result = list(discover_module._iter_configured_parents(config))
         self.assertEqual(result, [])
 
     def test_skips_non_string_items_in_list(self):
-        config = {"parent_resource_groups": ["FscmTopModelAM", 123, None]}
+        config = {"discovery_parents": ["FscmTopModelAM", 123, None]}
         result = list(discover_module._iter_configured_parents(config))
         self.assertEqual(result, ["FscmTopModelAM"])
 
 
 class TestGetDiscoveryWorkers(unittest.TestCase):
-    def test_auto_returns_default(self):
+    def test_invalid_auto_falls_back_to_default(self):
         config = {"discovery_workers": "auto"}
         result = discover_module._get_discovery_workers(config)
-        self.assertGreater(result, 0)
+        self.assertEqual(result, discover_module.DISCOVERY_WORKER_KEYS[1])
 
     def test_integer_value(self):
         config = {"discovery_workers": 4}
@@ -87,35 +87,17 @@ class TestGetDiscoveryWorkers(unittest.TestCase):
     def test_invalid_string_falls_back_to_default(self):
         config = {"discovery_workers": "not-a-number"}
         result = discover_module._get_discovery_workers(config)
-        self.assertEqual(result, discover_module.DEFAULT_DISCOVERY_WORKERS)
+        self.assertEqual(result, discover_module.DISCOVERY_WORKER_KEYS[1])
 
     def test_zero_falls_back_to_default(self):
         config = {"discovery_workers": 0}
         result = discover_module._get_discovery_workers(config)
-        self.assertEqual(result, discover_module.DEFAULT_DISCOVERY_WORKERS)
+        self.assertEqual(result, discover_module.DISCOVERY_WORKER_KEYS[1])
 
-    def test_capped_at_max(self):
+    def test_large_value_returned_as_is(self):
         config = {"discovery_workers": 9999}
         result = discover_module._get_discovery_workers(config)
-        self.assertLessEqual(result, discover_module.MAX_DISCOVERY_WORKERS)
-
-
-class TestGetDiscoveryRetryRounds(unittest.TestCase):
-    def test_default_value(self):
-        result = discover_module._get_discovery_retry_rounds({})
-        self.assertEqual(result, discover_module.DEFAULT_DISCOVERY_RETRY_ROUNDS)
-
-    def test_explicit_value(self):
-        result = discover_module._get_discovery_retry_rounds({"discovery_retry_rounds": 5})
-        self.assertEqual(result, 5)
-
-    def test_invalid_value_returns_default(self):
-        result = discover_module._get_discovery_retry_rounds({"discovery_retry_rounds": "bad"})
-        self.assertEqual(result, discover_module.DEFAULT_DISCOVERY_RETRY_ROUNDS)
-
-    def test_negative_returns_zero(self):
-        result = discover_module._get_discovery_retry_rounds({"discovery_retry_rounds": -1})
-        self.assertEqual(result, 0)
+        self.assertEqual(result, 9999)
 
 
 class TestListDatastoresPagination(unittest.TestCase):
@@ -176,7 +158,7 @@ class TestListDiscoveryCandidates(unittest.TestCase):
 
         config = {
             "base_url": "https://example",
-            "parent_resource_groups": ["FscmTopModelAM"],
+            "discovery_parents": ["FscmTopModelAM"],
         }
         candidates = discover_module._list_discovery_candidates(mock_client, config)
         self.assertEqual(candidates, ["FscmTopModelAM.Worker"])
@@ -288,52 +270,6 @@ class TestGetDiscoveryLimit(unittest.TestCase):
         # int([1, 2]) raises TypeError -> except branch -> returns None
         result = discover_module._get_discovery_limit({"discovery_limit": [1, 2]})
         self.assertIsNone(result)
-
-
-class TestBuildEntriesRetryable(unittest.TestCase):
-    @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_sequential_adds_retryable_failure_to_candidates(self, mock_client_cls):
-        runner = discover_module.BICCDiscoveryRunner({"base_url": "https://example"})
-        runner._total_count = 1
-        with mock.patch.object(runner, "_build_entry", return_value=(None, True)):
-            entries, retry_candidates = runner._build_entries_sequential(["DS.Worker"])
-        self.assertEqual(entries, [])
-        self.assertEqual(retry_candidates, ["DS.Worker"])
-
-    @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_threaded_adds_retryable_failure_to_candidates(self, mock_client_cls):
-        runner = discover_module.BICCDiscoveryRunner({"base_url": "https://example"})
-        runner.worker_count = 2
-        runner._total_count = 1
-        with mock.patch.object(runner, "_build_entry", return_value=(None, True)):
-            entries, retry_candidates = runner._build_entries_threaded(["DS.Worker"])
-        self.assertEqual(entries, [])
-        self.assertEqual(retry_candidates, ["DS.Worker"])
-
-
-class TestDiscoverRetryRounds(unittest.TestCase):
-    @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_retry_round_is_logged_and_executed(self, mock_client_cls):
-        config = {"base_url": "https://example", "discovery_retry_rounds": 1}
-        runner = discover_module.BICCDiscoveryRunner(config)
-        with mock.patch.object(runner, "list_candidates", return_value=["DS.Worker"]):
-            with mock.patch.object(runner, "_build_entry", return_value=(None, True)):
-                with mock.patch.object(discover_module.LOGGER, "info") as mock_log:
-                    catalog = runner.discover()
-        self.assertEqual(catalog.streams, [])
-        retry_calls = [c for c in mock_log.call_args_list if "Retrying" in str(c)]
-        self.assertTrue(len(retry_calls) > 0)
-
-    @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_persistent_failure_added_to_skipped_after_all_rounds(self, mock_client_cls):
-        config = {"base_url": "https://example", "discovery_retry_rounds": 1}
-        runner = discover_module.BICCDiscoveryRunner(config)
-        with mock.patch.object(runner, "list_candidates", return_value=["DS.Worker"]):
-            with mock.patch.object(runner, "_build_entry", return_value=(None, True)):
-                catalog = runner.discover()
-        self.assertEqual(catalog.streams, [])
-        skipped_names = [name for name, _ in runner._skipped_datastores]
-        self.assertIn("DS.Worker", skipped_names)
 
 
 if __name__ == "__main__":

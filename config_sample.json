@@ -3,7 +3,7 @@
   "username": "your_username",
   "password": "your_password",
   "start_date": "2020-01-01T00:00:00Z",
-  "parent_resource_groups": ["CrmAnalyticsAM"],
-  "page_size": 100,
-  "request_timeout": 300
+  "discovery_parents": ["CrmAnalyticsAM"],
+  "discovery_limit": 100,
+  "datastore_page_size": 100
 }

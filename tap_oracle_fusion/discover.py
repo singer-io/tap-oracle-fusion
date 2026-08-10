@@ -1,7 +1,6 @@
 """Discovery logic for Oracle Fusion BICC datastore catalog generation."""
 import re
 import threading
-import os
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import quote
@@ -15,14 +14,10 @@ from tap_oracle_fusion.schema import build_bicc_schema_and_metadata
 LOGGER = singer.get_logger()
 BICC_DATASTORES_PATH = "biacm/rest/meta/datastores"
 DISCOVERY_LIMIT_KEYS = ("discovery_limit",)
-DISCOVERY_WORKER_KEYS = ("discovery_workers",)
-DISCOVERY_PARENT_KEYS = ("parent_resource_groups", "discovery_parents")
-DEFAULT_DISCOVERY_WORKERS = min(64, max(8, (os.cpu_count() or 8) * 4))
-MAX_DISCOVERY_WORKERS = 128
+DISCOVERY_WORKER_KEYS = ("discovery_workers", 8)
+DISCOVERY_PARENTS_KEY = "discovery_parents"
 DISCOVERY_PROGRESS_LOG_EVERY = 250
 DEFAULT_DATASTORE_PAGE_SIZE = 500
-DISCOVERY_RETRY_ROUNDS_KEY = "discovery_retry_rounds"
-DEFAULT_DISCOVERY_RETRY_ROUNDS = 2
 
 
 def _normalize_stream_name(resource_name: str) -> str:
@@ -56,12 +51,7 @@ def _iter_configured_datastores(config: Mapping[str, Any]) -> Iterable[str]:
 
 
 def _iter_configured_parents(config: Mapping[str, Any]) -> Iterable[str]:
-    configured = None
-    for key in DISCOVERY_PARENT_KEYS:
-        value = config.get(key)
-        if value is not None:
-            configured = value
-            break
+    configured = config.get(DISCOVERY_PARENTS_KEY)
 
     if configured is None:
         return []
@@ -120,30 +110,15 @@ def _get_discovery_limit(config: Mapping[str, Any]) -> Optional[int]:
 
 
 def _get_discovery_workers(config: Mapping[str, Any]) -> int:
-    for key in DISCOVERY_WORKER_KEYS:
-        value = config.get(key)
-        if value is None:
-            continue
-
-        if isinstance(value, str) and value.strip().lower() == "auto":
-            return DEFAULT_DISCOVERY_WORKERS
-
-        try:
-            parsed = int(value)
-        except (TypeError, ValueError):
-            continue
-        if parsed > 0:
-            return min(parsed, MAX_DISCOVERY_WORKERS)
-    return DEFAULT_DISCOVERY_WORKERS
-
-
-def _get_discovery_retry_rounds(config: Mapping[str, Any]) -> int:
-    value = config.get(DISCOVERY_RETRY_ROUNDS_KEY, DEFAULT_DISCOVERY_RETRY_ROUNDS)
+    key, default = DISCOVERY_WORKER_KEYS
+    value = config.get(key)
+    if value is None:
+        return default
     try:
         parsed = int(value)
     except (TypeError, ValueError):
-        return DEFAULT_DISCOVERY_RETRY_ROUNDS
-    return max(parsed, 0)
+        return default
+    return parsed if parsed > 0 else default
 
 
 def _list_datastores(client: OracleClient, config: Mapping[str, Any]) -> List[Any]:
@@ -274,7 +249,6 @@ class BICCDiscoveryRunner:  # pylint: disable=too-many-instance-attributes
         self._skip_lock = threading.Lock()
         self._processed_count = 0
         self._total_count = 0
-        self._retry_rounds = _get_discovery_retry_rounds(config)
         self._skipped_datastores: List[Tuple[str, str]] = []
 
     def _get_thread_client(self) -> OracleClient:
@@ -320,26 +294,22 @@ class BICCDiscoveryRunner:  # pylint: disable=too-many-instance-attributes
 
     def _build_entries_sequential(
         self, datastore_names: List[str]
-    ) -> Tuple[List[CatalogEntry], List[str]]:
+    ) -> List[CatalogEntry]:
         entries: List[CatalogEntry] = []
-        retry_candidates: List[str] = []
         for name in datastore_names:
-            entry, should_retry = self._build_entry(name, use_thread_client=False)
+            entry, _ = self._build_entry(name, use_thread_client=False)
             self._log_progress(name)
             if entry is not None:
                 entries.append(entry)
-            elif should_retry:
-                retry_candidates.append(name)
             else:
                 with self._skip_lock:
-                    self._skipped_datastores.append((name, "non-retryable discovery failure"))
-        return entries, retry_candidates
+                    self._skipped_datastores.append((name, "discovery failure"))
+        return entries
 
     def _build_entries_threaded(
         self, datastore_names: List[str]
-    ) -> Tuple[List[CatalogEntry], List[str]]:
+    ) -> List[CatalogEntry]:
         results: List[Optional[CatalogEntry]] = [None] * len(datastore_names)
-        retry_candidates: List[str] = []
 
         with ThreadPoolExecutor(max_workers=self.worker_count) as executor:
             future_to_index = {
@@ -348,18 +318,16 @@ class BICCDiscoveryRunner:  # pylint: disable=too-many-instance-attributes
             }
             for future in as_completed(future_to_index):
                 index = future_to_index[future]
-                entry, should_retry = future.result()
+                entry, _ = future.result()
                 results[index] = entry
-                if entry is None and should_retry:
-                    retry_candidates.append(datastore_names[index])
-                elif entry is None:
+                if entry is None:
                     with self._skip_lock:
                         self._skipped_datastores.append(
-                            (datastore_names[index], "non-retryable discovery failure")
+                            (datastore_names[index], "discovery failure")
                         )
                 self._log_progress(datastore_names[index])
 
-        return [entry for entry in results if entry is not None], retry_candidates
+        return [entry for entry in results if entry is not None]
 
     def _log_progress(self, datastore_name: str) -> None:
         with self._progress_lock:
@@ -402,31 +370,9 @@ class BICCDiscoveryRunner:  # pylint: disable=too-many-instance-attributes
         )
 
         if self.worker_count <= 1 or len(datastore_names) <= 1:
-            entries, retry_candidates = self._build_entries_sequential(datastore_names)
+            entries = self._build_entries_sequential(datastore_names)
         else:
-            entries, retry_candidates = self._build_entries_threaded(datastore_names)
-
-        pending_retry = sorted(set(retry_candidates))
-        for retry_round in range(1, self._retry_rounds + 1):
-            if not pending_retry:
-                break
-
-            LOGGER.info(
-                "Retrying discovery detail fetch for %s datastore(s), round %s/%s",
-                len(pending_retry),
-                retry_round,
-                self._retry_rounds,
-            )
-            self._total_count = len(pending_retry)
-            self._processed_count = 0
-            retry_entries, pending_retry = self._build_entries_sequential(pending_retry)
-            entries.extend(retry_entries)
-
-        for datastore_name in pending_retry:
-            with self._skip_lock:
-                self._skipped_datastores.append(
-                    (datastore_name, "retryable discovery failure after all retry rounds")
-                )
+            entries = self._build_entries_threaded(datastore_names)
 
         self._log_skipped_datastores()
         return Catalog(streams=entries)

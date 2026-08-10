@@ -64,7 +64,7 @@ class OracleFusionBaseTest(BaseCase):
                 "https://fa-eqkg-dev19-saasfademo1.ds-fa.oraclepdemos.com",
             ),
             "start_date": self.start_date,
-            "parent_resource_groups": ["FscmTopModelAM"],
+            "discovery_parents": ["FscmTopModelAM"],
             "discovery_workers": 8,
             "discovery_limit": 500,
             "datastore_page_size": 500,
