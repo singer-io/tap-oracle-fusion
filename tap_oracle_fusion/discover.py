@@ -17,7 +17,6 @@ DISCOVERY_LIMIT_KEYS = ("discovery_limit",)
 DISCOVERY_WORKER_KEYS = ("discovery_workers", 8)
 DISCOVERY_PARENTS_KEY = "discovery_parents"
 DISCOVERY_PROGRESS_LOG_EVERY = 250
-DEFAULT_DATASTORE_PAGE_SIZE = 500
 
 
 def _normalize_stream_name(resource_name: str) -> str:
@@ -121,31 +120,11 @@ def _get_discovery_workers(config: Mapping[str, Any]) -> int:
     return parsed if parsed > 0 else default
 
 
-def _list_datastores(client: OracleClient, config: Mapping[str, Any]) -> List[Any]:
-    """List datastore entries and follow common Oracle pagination patterns when present."""
-    page_size = int(config.get("datastore_page_size", DEFAULT_DATASTORE_PAGE_SIZE))
-    offset = 0
-    path = BICC_DATASTORES_PATH
-    params: Optional[Dict[str, Any]] = {"limit": page_size, "offset": offset}
-    entries: List[Any] = []
-
-    while True:
-        payload = client.get(path, params=params)
-        entries.extend(_extract_datastore_entries(payload))
-
-        next_link = OracleClient.parse_next_link(payload)
-        if next_link:
-            path, params = next_link
-            continue
-
-        has_more = payload.get("hasMore")
-        if isinstance(has_more, bool) and has_more:
-            offset += page_size
-            params = {"limit": page_size, "offset": offset}
-            continue
-
-        break
-
+def _list_datastores(client: OracleClient) -> List[Any]:
+    """Fetch all datastore entries in a single request (the API does not support pagination)."""
+    payload = client.get(BICC_DATASTORES_PATH)
+    entries = _extract_datastore_entries(payload)
+    LOGGER.info("Datastores received: %s", len(entries))
     return entries
 
 
@@ -156,7 +135,7 @@ def _list_discovery_candidates(client: OracleClient, config: Mapping[str, Any]) 
 
     candidates: List[str] = []
     seen_names: Set[str] = set()
-    for entry in _list_datastores(client, config):
+    for entry in _list_datastores(client):
         datastore_name = _extract_datastore_name(entry)
         if not datastore_name:
             continue

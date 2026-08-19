@@ -67,7 +67,6 @@ class OracleFusionBaseTest(BaseCase):
             "discovery_parents": ["FscmTopModelAM"],
             "discovery_workers": 8,
             "discovery_limit": 500,
-            "datastore_page_size": 500,
             # Restrict discovery to only the streams under test.
             "streams": list(self._selected_datastore_names()),
         }
