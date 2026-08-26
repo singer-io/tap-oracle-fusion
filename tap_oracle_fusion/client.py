@@ -79,7 +79,10 @@ class OracleClient:
 
     @staticmethod
     def _is_non_retryable_server_error(response_text: str) -> bool:
-        lowered = response_text.lower()
+        lowered = response_text.lstrip().lower()
+        # HTML body means a proxy/splash page — not a transient API error.
+        if lowered.startswith("<!doctype") or lowered.startswith("<html"):
+            return True
         non_retryable_markers = (
             "not supported for extract",
             "nqserror: 43113",
@@ -113,18 +116,30 @@ class OracleClient:
             retryable=False,
         )
 
+    @staticmethod
+    def _on_giveup(details: Mapping[str, Any]) -> None:
+        exc = details["exception"]
+        # Non-retryable errors (e.g. "not supported for extract") are expected — log quietly.
+        if isinstance(exc, OracleClientError) and not exc.retryable:
+            LOGGER.debug("Skipping non-retryable error after %s tries: %s", details["tries"], exc)
+        else:
+            LOGGER.error("Giving up after %s tries: %s", details["tries"], exc)
+
     @backoff.on_exception(
         backoff.expo,
         (requests.exceptions.Timeout, requests.exceptions.ConnectionError, OracleClientError),
         max_tries=5,
         on_backoff=_wait_if_retry_after,
+        on_giveup=_on_giveup,
         giveup=_should_give_up,
+        logger=None,
     )
     def get(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
         """Perform an authenticated GET request with backoff retry and return the JSON payload."""
         url = f"{self.base_url}/{path.lstrip('/')}"
         LOGGER.info("Oracle request: %s params=%s", url, params or {})
 
+        start = time.time()
         response = self.session.get(
             url,
             params=params,
@@ -132,6 +147,7 @@ class OracleClient:
             auth=self._auth_tuple(),
             timeout=self.request_timeout,
         )
+        LOGGER.info("Oracle response: %s %.3fs", url, time.time() - start)
         self._raise_for_http_error(response)
 
         payload = response.json()

@@ -100,48 +100,15 @@ class TestGetDiscoveryWorkers(unittest.TestCase):
         self.assertEqual(result, 9999)
 
 
-class TestListDatastoresPagination(unittest.TestCase):
+class TestListDatastores(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_follows_has_more_pagination(self, mock_client_cls):
+    def test_single_request_returns_all_entries(self, mock_client_cls):
         mock_client = mock_client_cls.return_value
-        mock_client_cls.parse_next_link.return_value = None
+        mock_client.get.return_value = {"dataStores": ["A.Store", "B.Store"]}
 
-        call_count = [0]
-
-        def _fake_get(path, params=None):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return {"dataStores": ["A.Store"], "hasMore": True}
-            return {"dataStores": ["B.Store"], "hasMore": False}
-
-        mock_client.get.side_effect = _fake_get
-
-        entries = discover_module._list_datastores(mock_client, {"datastore_page_size": 1})
+        entries = discover_module._list_datastores(mock_client)
         self.assertEqual(entries, ["A.Store", "B.Store"])
-        self.assertEqual(call_count[0], 2)
-
-    @mock.patch("tap_oracle_fusion.discover.OracleClient")
-    def test_follows_next_link_pagination(self, mock_client_cls):
-        mock_client = mock_client_cls.return_value
-        call_count = [0]
-
-        def _fake_get(path, params=None):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return {"dataStores": ["A.Store"]}
-            return {"dataStores": ["B.Store"]}
-
-        mock_client.get.side_effect = _fake_get
-
-        # First call returns next_link, second call returns None
-        mock_client_cls.parse_next_link.side_effect = [
-            ("biacm/rest/meta/datastores", {"limit": 1, "offset": 1}),
-            None,
-        ]
-
-        entries = discover_module._list_datastores(mock_client, {})
-        self.assertEqual(entries, ["A.Store", "B.Store"])
-        self.assertEqual(call_count[0], 2)
+        mock_client.get.assert_called_once()
 
 
 class TestListDiscoveryCandidates(unittest.TestCase):

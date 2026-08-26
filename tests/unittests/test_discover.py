@@ -130,7 +130,7 @@ class TestDiscoverFlow(unittest.TestCase):
                 "worker_assignments": "biacm/rest/meta/datastores/Worker%20Assignments",
             },
         )
-        mock_client.get.assert_called_once_with("biacm/rest/meta/datastores", params={"limit": 500, "offset": 0})
+        mock_client.get.assert_called_once_with("biacm/rest/meta/datastores")
         mock_client_cls.assert_called_once_with(config)
 
     @mock.patch("tap_oracle_fusion.discover.OracleClient")
