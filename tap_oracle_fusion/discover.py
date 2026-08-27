@@ -90,8 +90,12 @@ def _build_datastore_detail_path(datastore_name: str) -> str:
     return f"{BICC_DATASTORES_PATH}/{quote(datastore_name, safe='')}"
 
 
-def _extract_datastore_parent(datastore_name: str) -> str:
-    return datastore_name.split(".", 1)[0].strip().lower()
+def _datastore_matches_any_parent(datastore_name: str, configured_parents: Set[str]) -> bool:
+    lowered = datastore_name.lower()
+    return any(
+        lowered == parent or lowered.startswith(parent + ".")
+        for parent in configured_parents
+    )
 
 
 def _get_discovery_limit(config: Mapping[str, Any]) -> Optional[int]:
@@ -141,9 +145,7 @@ def _list_discovery_candidates(client: OracleClient, config: Mapping[str, Any]) 
             continue
 
         lowered = datastore_name.lower()
-        if configured_parents and (
-            _extract_datastore_parent(datastore_name) not in configured_parents
-        ):
+        if configured_parents and not _datastore_matches_any_parent(datastore_name, configured_parents):
             continue
         if configured_datastores and lowered not in configured_datastores:
             continue
