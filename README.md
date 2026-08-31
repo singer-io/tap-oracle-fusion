@@ -30,7 +30,6 @@ Important optional keys:
 - bicc_enable_ess_sync: whether sync triggers ESS submit/poll per stream before reading records (default: `true`)
 - ess_poll_interval_seconds: ESS poll interval in seconds (default: `20`)
 - ess_max_polls: maximum ESS poll attempts per stream (default: `30`)
-- page_size: number of records to fetch per page (default: 100)
 
 Sample config:
 
@@ -40,9 +39,7 @@ Sample config:
 	"username": "your_username",
 	"password": "your_password",
 	"start_date": "2020-01-01T00:00:00Z",
-	"discovery_parents": ["CrmAnalyticsAM"],
-	"page_size": 100,
-	"request_timeout": 300
+	"discovery_parents": ["CrmAnalyticsAM"]
 }
 ```
 
@@ -59,6 +56,38 @@ Sync data:
 ```bash
 tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 ```
+
+## Available Datastores
+
+
+Use [spike/get_bicc_datastores.py](spike/get_bicc_datastores.py) to fetch all available BICC datastore names from your instance and write them to a file:
+
+```bash
+# Set required environment variables
+export ORACLE_BASE_URL="https://your-instance.example.oraclecloud.com"
+export ORACLE_USERNAME="your_username"
+export ORACLE_PASSWORD="your_password"
+
+# Optional: override the output file path (default: bicc_datastores.txt)
+export OUTPUT_FILE="spike/bicc_datastores.txt"
+
+python spike/get_bicc_datastores.py
+```
+
+On Windows (PowerShell):
+
+```powershell
+$env:ORACLE_BASE_URL = "https://your-instance.example.oraclecloud.com"
+$env:ORACLE_USERNAME = "your_username"
+$env:ORACLE_PASSWORD = "your_password"
+$env:OUTPUT_FILE     = "spike/bicc_datastores.txt"
+
+python spike/get_bicc_datastores.py
+```
+
+The script writes a numbered, human-readable list of all available BICC datastore names to the output file.
+
+> **Note:** Always cross-check available datastores against the official [Oracle Fusion BICC documentation](https://docs.oracle.com/en/cloud/saas/analytics/index.html), as they vary between releases, environments, and enabled modules.
 
 ## API calls used by discovery
 
