@@ -60,6 +60,12 @@ Sync data:
 tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 ```
 
+## Available Datastores Reference
+
+A snapshot of known BICC datastore names is available in [spike/bicc_datastores.txt](spike/bicc_datastores.txt).
+
+> **Disclaimer:** This list was captured at a point in time from a specific Oracle Fusion instance. Available datastores vary between Oracle Fusion releases, environments, and enabled modules. Always cross-check against your instance and the official [Oracle Fusion BICC documentation](https://docs.oracle.com/en/cloud/saas/analytics/index.html) before relying on this list.
+
 ## API calls used by discovery
 
 - GET /biacm/rest/meta/datastores
