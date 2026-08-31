@@ -66,6 +66,33 @@ A snapshot of known BICC datastore names is available in [spike/bicc_datastores.
 
 > **Disclaimer:** This list was captured at a point in time from a specific Oracle Fusion instance. Available datastores vary between Oracle Fusion releases, environments, and enabled modules. Always cross-check against your instance and the official [Oracle Fusion BICC documentation](https://docs.oracle.com/en/cloud/saas/analytics/index.html) before relying on this list.
 
+To refresh this list against your own Oracle Fusion instance, use [spike/get_bicc_datastores.py](spike/get_bicc_datastores.py):
+
+```bash
+# Set required environment variables
+export ORACLE_BASE_URL="https://your-instance.example.oraclecloud.com"
+export ORACLE_USERNAME="your_username"
+export ORACLE_PASSWORD="your_password"
+
+# Optional: override the output file path (default: bicc_datastores.txt)
+export OUTPUT_FILE="spike/bicc_datastores.txt"
+
+python spike/get_bicc_datastores.py
+```
+
+On Windows (PowerShell):
+
+```powershell
+$env:ORACLE_BASE_URL = "https://your-instance.example.oraclecloud.com"
+$env:ORACLE_USERNAME = "your_username"
+$env:ORACLE_PASSWORD = "your_password"
+$env:OUTPUT_FILE     = "spike/bicc_datastores.txt"
+
+python spike/get_bicc_datastores.py
+```
+
+The script writes a numbered, human-readable list of all available BICC datastore names to the output file.
+
 ## API calls used by discovery
 
 - GET /biacm/rest/meta/datastores
