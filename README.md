@@ -30,7 +30,6 @@ Important optional keys:
 - bicc_enable_ess_sync: whether sync triggers ESS submit/poll per stream before reading records (default: `true`)
 - ess_poll_interval_seconds: ESS poll interval in seconds (default: `20`)
 - ess_max_polls: maximum ESS poll attempts per stream (default: `30`)
-- page_size: number of records to fetch per page (default: 100)
 
 Sample config:
 
@@ -40,9 +39,7 @@ Sample config:
 	"username": "your_username",
 	"password": "your_password",
 	"start_date": "2020-01-01T00:00:00Z",
-	"discovery_parents": ["CrmAnalyticsAM"],
-	"page_size": 100,
-	"request_timeout": 300
+	"discovery_parents": ["CrmAnalyticsAM"]
 }
 ```
 
@@ -60,13 +57,10 @@ Sync data:
 tap-oracle-fusion --config config.json --catalog catalog.json --state state.json
 ```
 
-## Available Datastores Reference
+## Available Datastores
 
-A snapshot of known BICC datastore names is available in [spike/bicc_datastores.txt](spike/bicc_datastores.txt).
 
-> **Disclaimer:** This list was captured at a point in time from a specific Oracle Fusion instance. Available datastores vary between Oracle Fusion releases, environments, and enabled modules. Always cross-check against your instance and the official [Oracle Fusion BICC documentation](https://docs.oracle.com/en/cloud/saas/analytics/index.html) before relying on this list.
-
-To refresh this list against your own Oracle Fusion instance, use [spike/get_bicc_datastores.py](spike/get_bicc_datastores.py):
+Use [spike/get_bicc_datastores.py](spike/get_bicc_datastores.py) to fetch all available BICC datastore names from your instance and write them to a file:
 
 ```bash
 # Set required environment variables
@@ -92,6 +86,8 @@ python spike/get_bicc_datastores.py
 ```
 
 The script writes a numbered, human-readable list of all available BICC datastore names to the output file.
+
+> **Note:** Always cross-check available datastores against the official [Oracle Fusion BICC documentation](https://docs.oracle.com/en/cloud/saas/analytics/index.html), as they vary between releases, environments, and enabled modules.
 
 ## API calls used by discovery
 
