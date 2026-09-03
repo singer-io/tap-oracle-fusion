@@ -124,7 +124,6 @@ class BICCExtractClient:
         datastore: str,
         job_id: str,
         ess_poll_interval: int,
-        ess_max_polls: int,
         ucm_poll_interval: int,
         ucm_max_attempts: int,
     ) -> Tuple[Iterator[Dict[str, str]], Dict[str, str]]:
@@ -138,7 +137,7 @@ class BICCExtractClient:
             datastore,
             pre_did,
         )
-        state = self.poll(request_id, ess_poll_interval, ess_max_polls)
+        state = self.poll(request_id, ess_poll_interval)
         if state in FATAL_STATES:
             raise ExtractError(f"ESS terminal state={state} request_id={request_id}")
 
@@ -191,9 +190,12 @@ class BICCExtractClient:
             )
         return request_id
 
-    def poll(self, request_id: str, poll_interval: int, max_polls: int) -> str:
+    def poll(self, request_id: str, poll_interval: int) -> str:
         """Poll ESS until a terminal state is reached and return the final state."""
-        for attempt in range(1, max(max_polls, 1) + 1):
+        state: Optional[str] = None
+        attempt = 0
+        while state not in TERMINAL_STATES:
+            attempt += 1
             resp = self._post(
                 self.ess_url,
                 _state_envelope(self.base_url, self.username, self.password, request_id),
@@ -203,11 +205,10 @@ class BICCExtractClient:
                 fault = _text_by_local_name(resp.text, "faultstring")
                 raise ExtractError(f"getRequestState missing state. fault={fault or 'none'}")
             LOGGER.info("ESS poll attempt=%s state=%s", attempt, state)
-            if state in TERMINAL_STATES:
-                return state
-            if attempt < max_polls:
+            if state not in TERMINAL_STATES:
                 time.sleep(max(1, poll_interval))
-        raise ExtractError(f"ESS timed out after {max_polls} polls for request {request_id}")
+
+        return state
 
     def _search_datastore_files(self, datastore: str) -> list[dict[str, str]]:
         """Search UCM for extract files belonging to a datastore and return row dicts."""
