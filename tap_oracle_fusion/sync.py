@@ -233,7 +233,6 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
     stream_to_path: Optional[Dict[str, str]] = None
     selected_streams = catalog.get_selected_streams(state)
     ess_poll_interval = int(config.get("ess_poll_interval_seconds", 20))
-    ess_max_polls = int(config.get("ess_max_polls", 30))
     ucm_poll_interval = int(config.get("ucm_poll_interval_seconds", 12))
     ucm_max_attempts = int(config.get("ucm_max_attempts", 30))
     initial_extract_date = str(config.get("initial_extract_date", DEFAULT_INITIAL_EXTRACT_DATE))
@@ -308,7 +307,6 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         datastore=datastore,
                         job_id=job_id,
                         ess_poll_interval=ess_poll_interval,
-                        ess_max_polls=ess_max_polls,
                         ucm_poll_interval=ucm_poll_interval,
                         ucm_max_attempts=ucm_max_attempts,
                     )

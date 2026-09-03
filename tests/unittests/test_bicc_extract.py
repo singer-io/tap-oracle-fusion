@@ -479,29 +479,33 @@ class TestSubmitAndPoll(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
     def test_poll_succeeded(self, mock_post, _sleep):
         mock_post.return_value = _FakeResponse(200, "<root><state>SUCCEEDED</state></root>")
-        state = self._client().poll("REQ-001", poll_interval=0, max_polls=3)
+        state = self._client().poll("REQ-001", poll_interval=0)
         self.assertEqual(state, "SUCCEEDED")
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
     def test_poll_warning_state_returned(self, mock_post, _sleep):
         mock_post.return_value = _FakeResponse(200, "<root><state>WARNING</state></root>")
-        state = self._client().poll("REQ-001", poll_interval=0, max_polls=1)
+        state = self._client().poll("REQ-001", poll_interval=0)
         self.assertEqual(state, "WARNING")
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_poll_times_out_raises(self, mock_post, _sleep):
-        mock_post.return_value = _FakeResponse(200, "<root><state>RUNNING</state></root>")
-        with self.assertRaises(ExtractError) as ctx:
-            self._client().poll("REQ-001", poll_interval=0, max_polls=2)
-        self.assertIn("timed out", str(ctx.exception))
+    def test_poll_continues_until_terminal(self, mock_post, _sleep):
+        mock_post.side_effect = [
+            _FakeResponse(200, "<root><state>RUNNING</state></root>"),
+            _FakeResponse(200, "<root><state>RUNNING</state></root>"),
+            _FakeResponse(200, "<root><state>SUCCEEDED</state></root>"),
+        ]
+        state = self._client().poll("REQ-001", poll_interval=0)
+        self.assertEqual(state, "SUCCEEDED")
+        self.assertEqual(mock_post.call_count, 3)
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
     def test_poll_raises_on_missing_state(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "<root><faultstring>bad</faultstring></root>")
         with self.assertRaises(ExtractError) as ctx:
-            self._client().poll("REQ-001", poll_interval=0, max_polls=1)
+            self._client().poll("REQ-001", poll_interval=0)
         self.assertIn("missing state", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
@@ -511,7 +515,7 @@ class TestSubmitAndPoll(unittest.TestCase):
             _FakeResponse(200, "<root><state>RUNNING</state></root>"),
             _FakeResponse(200, "<root><state>SUCCEEDED</state></root>"),
         ]
-        self._client().poll("REQ-001", poll_interval=10, max_polls=3)
+        self._client().poll("REQ-001", poll_interval=10)
         mock_sleep.assert_called_once_with(10)
 
 
@@ -728,7 +732,7 @@ class TestRunExtractToRows(unittest.TestCase):
         mock_download.return_value = _make_zip_bytes({"data.csv": "id,val\n1,x\n"})
         rows_iter, info = self._client().run_extract_to_rows(
             "W.DS", "job-1",
-            ess_poll_interval=0, ess_max_polls=1,
+            ess_poll_interval=0,
             ucm_poll_interval=0, ucm_max_attempts=1,
         )
         rows = list(rows_iter)
@@ -745,7 +749,7 @@ class TestRunExtractToRows(unittest.TestCase):
         with self.assertRaises(ExtractError) as ctx:
             self._client().run_extract_to_rows(
                 "W.DS", "job-1",
-                ess_poll_interval=0, ess_max_polls=1,
+                ess_poll_interval=0,
                 ucm_poll_interval=0, ucm_max_attempts=1,
             )
         self.assertIn("ERROR", str(ctx.exception))
@@ -757,7 +761,7 @@ class TestRunExtractToRows(unittest.TestCase):
         with self.assertRaises(ExtractError):
             self._client().run_extract_to_rows(
                 "W.DS", "job-1",
-                ess_poll_interval=0, ess_max_polls=1,
+                ess_poll_interval=0,
                 ucm_poll_interval=0, ucm_max_attempts=1,
             )
 

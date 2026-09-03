@@ -29,7 +29,6 @@ Important optional keys:
 - bicc_job_id (or job_id/extract_job_id): existing Oracle BICC Job ID required for ESS submitRequest (example: `1`)
 - bicc_enable_ess_sync: whether sync triggers ESS submit/poll per stream before reading records (default: `true`)
 - ess_poll_interval_seconds: ESS poll interval in seconds (default: `20`)
-- ess_max_polls: maximum ESS poll attempts per stream (default: `30`)
 
 Sample config:
 
