@@ -9,7 +9,7 @@ import sys
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, NamedTuple, Optional, Tuple
 from urllib.parse import unquote
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
@@ -43,6 +43,13 @@ _set_csv_field_size_limit()
 
 class ExtractError(Exception):
     """Raised when job creation or ESS/UCM extraction fails."""
+
+
+class ExtractFile(NamedTuple):
+    """One UCM data file belonging to a BICC extract run."""
+
+    name: str
+    did: str
 
 
 class BICCExtractClient:
@@ -127,33 +134,66 @@ class BICCExtractClient:
         ucm_poll_interval: int,
         ucm_max_attempts: int,
     ) -> Tuple[Iterator[Dict[str, str]], Dict[str, str]]:
-        """Submit an ESS extract job and yield CSV rows from the resulting UCM file."""
-        pre_did = self.latest_did(datastore)
+        """Submit an ESS extract job and yield CSV rows from every UCM file of this run."""
         request_id = self.submit(datastore, job_id)
         LOGGER.info(
-            "Submitted ESS request_id=%s job_id=%s datastore=%s ucm_did_floor=%s",
+            "Submitted ESS request_id=%s job_id=%s datastore=%s",
             request_id,
             job_id,
             datastore,
-            pre_did,
         )
         state = self.poll(request_id, ess_poll_interval)
         if state in FATAL_STATES:
             raise ExtractError(f"ESS terminal state={state} request_id={request_id}")
 
-        file_id = self.find_file_id(
+        files = self.find_extract_files(
             datastore,
+            job_id=job_id,
+            request_id=request_id,
             max_attempts=ucm_max_attempts,
             poll_interval=ucm_poll_interval,
-            min_did=pre_did,
         )
-        payload = self.download(file_id)
-        return _iter_csv_rows_from_zip_bytes(payload), {
+        LOGGER.info(
+            "BICC extract request_id=%s datastore=%s files=%s dIDs=%s",
+            request_id,
+            datastore,
+            len(files),
+            ",".join(f.did for f in files),
+        )
+        return self._iter_rows_from_files(files, request_id), {
             "request_id": request_id,
             "state": state,
-            "file_id": file_id,
-            "ucm_did_floor": str(pre_did),
+            "file_ids": ",".join(f.did for f in files),
         }
+
+    def _iter_rows_from_files(
+        self, files: List[ExtractFile], request_id: str
+    ) -> Iterator[Dict[str, str]]:
+        """Download each extract file in turn and yield its CSV rows."""
+        seen: set = set()
+        total = 0
+        for index, extract_file in enumerate(files, start=1):
+            payload = self.download(extract_file.did)
+            file_rows = 0
+            for row in _iter_csv_rows_from_zip_bytes(payload, seen):
+                file_rows += 1
+                yield row
+            del payload
+            total += file_rows
+            LOGGER.info(
+                "Read file %s/%s dID=%s name=%s rows=%s",
+                index,
+                len(files),
+                extract_file.did,
+                extract_file.name,
+                file_rows,
+            )
+        LOGGER.info(
+            "Finished BICC extract request_id=%s files=%s total_csv_rows=%s",
+            request_id,
+            len(files),
+            total,
+        )
 
     def _post(self, url: str, envelope: str) -> requests.Response:
         """Send a SOAP/XML POST request and return the raw response."""
@@ -210,12 +250,13 @@ class BICCExtractClient:
 
         return state
 
-    def _search_datastore_files(self, datastore: str) -> list[dict[str, str]]:
-        """Search UCM for extract files belonging to a datastore and return row dicts."""
-        query_text = f"dDocTitle <starts> `file_{self.datastore_slug(datastore)}`"
+    def _search(self, query_text: str, result_count: int = 50) -> list[dict[str, str]]:
+        """Run a UCM GET_SEARCH_RESULTS query and return row dicts."""
         resp = self._post(
             self.ucm_url,
-            _search_envelope(self.base_url, self.username, self.password, query_text),
+            _search_envelope(
+                self.base_url, self.username, self.password, query_text, result_count
+            ),
         )
         envelope, _ = _envelope_and_attachments(resp)
         try:
@@ -235,35 +276,65 @@ class BICCExtractClient:
             )
         return _search_rows(root)
 
-    def latest_did(self, datastore: str) -> int:
-        """Return the highest UCM dID seen for a datastore, or 0 if none found."""
-        dids = [_as_int(r.get("dID")) for r in self._search_datastore_files(datastore)]
-        return max((d for d in dids if d is not None), default=0)
+    def find_extract_files(  # pylint: disable=too-many-arguments
+        self,
+        datastore: str,
+        job_id: str,
+        request_id: str,
+        max_attempts: int,
+        poll_interval: int,
+    ) -> List[ExtractFile]:
+        """Return every UCM data file listed in the manifest of this exact ESS request.
 
-    def find_file_id(
-        self, datastore: str, max_attempts: int, poll_interval: int, min_did: int = 0
+        BICC splits large extracts into several files and lists all of them in
+        MANIFEST_DATA_<job_id>-SCHEDULE_<id>_REQUEST_<request_id>.MF.
+        """
+        manifest_did = self.find_manifest_id(job_id, request_id, max_attempts, poll_interval)
+        text = self.download(manifest_did).decode("utf-8-sig", errors="replace")
+        files = _parse_manifest(text, self.datastore_slug(datastore))
+        if not files:
+            LOGGER.warning(
+                "BICC manifest dID=%s for request_id=%s lists no files for %s; 0 rows",
+                manifest_did,
+                request_id,
+                datastore,
+            )
+        return files
+
+    def find_manifest_id(
+        self, job_id: str, request_id: str, max_attempts: int, poll_interval: int
     ) -> str:
-        """Poll UCM until a new extract file appears above min_did and return its dID."""
-        for attempt in range(1, max(max_attempts, 1) + 1):
-            rows = self._search_datastore_files(datastore)
-            fresh = sorted(
-                (r for r in rows if (_as_int(r.get("dID")) or 0) > min_did),
-                key=lambda r: _as_int(r.get("dID")) or 0,
-                reverse=True,
-            )
+        """Poll UCM until the manifest for this ESS request appears and return its dID."""
+        query_text = f"dDocTitle <starts> `MANIFEST_DATA_{job_id}-`"
+        suffix = f"_REQUEST_{request_id}.MF".lower()
+        attempts = max(max_attempts, 1)
+        for attempt in range(1, attempts + 1):
+            rows = self._search(query_text)
+            matches = []
+            for row in rows:
+                did = _as_int(row.get("dID"))
+                title = row.get("dDocTitle") or row.get("dOriginalName") or ""
+                if did is not None and title.lower().endswith(suffix):
+                    matches.append(did)
             LOGGER.info(
-                "UCM search attempt=%s rows=%s fresh_above_%s=%s",
+                "UCM manifest search attempt=%s job_id=%s request_id=%s rows=%s matches=%s",
                 attempt,
+                job_id,
+                request_id,
                 len(rows),
-                min_did,
-                len(fresh),
+                len(matches),
             )
-            if fresh:
-                return str(fresh[0]["dID"])
-            if attempt < max_attempts:
+            if matches:
+                manifest_did = str(max(matches))
+                LOGGER.info(
+                    "Using BICC manifest dID=%s for request_id=%s", manifest_did, request_id
+                )
+                return manifest_did
+            if attempt < attempts:
                 time.sleep(max(1, poll_interval))
         raise ExtractError(
-            f"No new UCM file for {datastore} after {max_attempts} attempts"
+            f"No UCM manifest for job_id={job_id} request_id={request_id} "
+            f"after {attempts} attempts"
         )
 
     def download(self, file_id: str) -> bytes:
@@ -302,7 +373,24 @@ class BICCExtractClient:
         raise ExtractError("GET_FILE response had no attachment or decodable payload")
 
 
-def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
+def _matches_slug(name: str, slug: str) -> bool:
+    return name.lower().startswith(f"file_{slug}")
+
+
+def _parse_manifest(text: str, slug: str) -> List[ExtractFile]:
+    """Parse BICC MANIFEST.MF lines (`name;dID;...`) belonging to the datastore slug."""
+    files: List[ExtractFile] = []
+    for line in text.splitlines():
+        parts = [p.strip() for p in line.split(";")]
+        if len(parts) < 2 or not _matches_slug(parts[0], slug) or _as_int(parts[1]) is None:
+            continue
+        files.append(ExtractFile(parts[0], parts[1]))
+    return files
+
+
+def _iter_csv_rows_from_zip_bytes(
+    payload: bytes, seen: Optional[set] = None
+) -> Iterator[Dict[str, str]]:
     """Yield CSV row dicts from a ZIP payload held in memory.
 
     Memory-efficient: streams each CSV entry row-by-row via TextIOWrapper instead
@@ -319,7 +407,8 @@ def _iter_csv_rows_from_zip_bytes(payload: bytes) -> Iterator[Dict[str, str]]:
             # records appearing in more than one file are only yielded once.
             # Store a SHA-256 digest (32 bytes) per row instead of the full row
             # tuple to keep the seen-set memory footprint small.
-            seen: set = set()
+            if seen is None:
+                seen = set()
             for csv_name in csv_names:
                 with archive.open(csv_name) as raw_fh:
                     text_fh = io.TextIOWrapper(raw_fh, encoding="utf-8-sig", errors="replace")
