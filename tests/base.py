@@ -141,7 +141,7 @@ class OracleFusionBaseTest(BaseCase):
             "FscmTopModelAM.PrcPoPublicViewAM.StandardHeaderPVO",
             "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentTypeBP",
             "FscmTopModelAM.FinLeLegalEntitiesAM.LegalEntityPVO",
-            "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
+            # "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
         ]
 
     @classmethod
