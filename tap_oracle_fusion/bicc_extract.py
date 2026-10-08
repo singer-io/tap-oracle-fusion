@@ -374,7 +374,8 @@ class BICCExtractClient:
 
 
 def _matches_slug(name: str, slug: str) -> bool:
-    return name.lower().startswith(f"file_{slug}")
+    """Return whether a filename starts with the datastore's file prefix, ignoring case."""
+    return name.lower().startswith(f"file_{slug}-")
 
 
 def _parse_manifest(text: str, slug: str) -> List[ExtractFile]:

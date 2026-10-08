@@ -593,7 +593,7 @@ class TestFindExtractFiles(unittest.TestCase):
             max_attempts=max_attempts, poll_interval=poll_interval,
         )
 
-    def test_parse_manifest_filters_by_datastore_prefix(self):
+    def test_parse_manifest_filters_by_exact_datastore_slug(self):
         text = (
             "PLV_KEY=FUSION_13_0\n"
             "file_w_ds-batch1-20260101_000000.zip;501;abc\n"
@@ -602,7 +602,7 @@ class TestFindExtractFiles(unittest.TestCase):
             "file_x_ds-batch2-20260101_000000.zip;504;456\n"
         )
         files = _parse_manifest(text, "w_ds")
-        self.assertEqual([f.did for f in files], ["501", "502", "503"])
+        self.assertEqual([f.did for f in files], ["501", "502"])
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
     def test_returns_all_files_from_request_manifest(self, _sleep):
