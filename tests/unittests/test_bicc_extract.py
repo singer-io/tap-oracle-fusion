@@ -12,12 +12,14 @@ import requests
 from tap_oracle_fusion.bicc_extract import (
     BICCExtractClient,
     ExtractError,
+    ExtractFile,
     _as_int,
     _document_field,
     _envelope_and_attachments,
     _get_file_envelope,
     _iter_csv_rows_from_zip_bytes,
     _local,
+    _parse_manifest,
     _search_envelope,
     _search_rows,
     _soap_fault,
@@ -520,7 +522,7 @@ class TestSubmitAndPoll(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _search_datastore_files, latest_did, find_file_id
+# _search
 # ---------------------------------------------------------------------------
 
 class TestSearchAndFindFile(unittest.TestCase):
@@ -536,14 +538,14 @@ class TestSearchAndFindFile(unittest.TestCase):
             <Row><Field name="dID">200</Field></Row>
         </root>"""
         mock_post.return_value = _FakeResponse(200, xml)
-        rows = self._client()._search_datastore_files("W.DS")
+        rows = self._client()._search("dDocTitle <starts> `x`")
         self.assertEqual(len(rows), 2)
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
     def test_search_raises_on_soap_fault(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "<root><faultstring>Auth error</faultstring></root>")
         with self.assertRaises(ExtractError) as ctx:
-            self._client()._search_datastore_files("W.DS")
+            self._client()._search("q")
         self.assertIn("SOAP fault", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
@@ -551,72 +553,122 @@ class TestSearchAndFindFile(unittest.TestCase):
         xml = "<root><Field name='StatusCode'>99</Field><Field name='StatusMessage'>Err</Field></root>"
         mock_post.return_value = _FakeResponse(200, xml)
         with self.assertRaises(ExtractError) as ctx:
-            self._client()._search_datastore_files("W.DS")
+            self._client()._search("q")
         self.assertIn("StatusCode=99", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
     def test_search_raises_on_parse_error(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "not xml <<< broken")
         with self.assertRaises(ExtractError) as ctx:
-            self._client()._search_datastore_files("W.DS")
+            self._client()._search("q")
         self.assertIn("unparseable", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_latest_did_returns_max(self, mock_post):
-        xml = """<root>
-            <Row><Field name="dID">100</Field></Row>
-            <Row><Field name="dID">300</Field></Row>
-            <Row><Field name="dID">200</Field></Row>
-        </root>"""
-        mock_post.return_value = _FakeResponse(200, xml)
-        self.assertEqual(self._client().latest_did("W.DS"), 300)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_latest_did_zero_when_no_rows(self, mock_post):
-        mock_post.return_value = _FakeResponse(200, "<root></root>")
-        self.assertEqual(self._client().latest_did("W.DS"), 0)
+# ---------------------------------------------------------------------------
+# find_extract_files (manifest of the exact ESS request)
+# ---------------------------------------------------------------------------
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_find_file_id_found_immediately(self, mock_post, _sleep):
-        xml = "<root><Row><Field name='dID'>500</Field></Row></root>"
-        mock_post.return_value = _FakeResponse(200, xml)
-        file_id = self._client().find_file_id("W.DS", max_attempts=3, poll_interval=0, min_did=0)
-        self.assertEqual(file_id, "500")
+def _rows(*rows):
+    """Build UCM search rows from (dID, title) pairs."""
+    return [{"dID": str(did), "dDocTitle": title} for did, title in rows]
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_find_file_id_raises_after_max_attempts(self, mock_post, _sleep):
-        mock_post.return_value = _FakeResponse(200, "<root></root>")
-        with self.assertRaises(ExtractError) as ctx:
-            self._client().find_file_id("W.DS", max_attempts=2, poll_interval=0, min_did=0)
-        self.assertIn("No new UCM file", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_find_file_id_waits_for_newer_file(self, mock_post, mock_sleep):
-        xml_low = "<root><Row><Field name='dID'>100</Field></Row></root>"
-        xml_high = "<root><Row><Field name='dID'>600</Field></Row></root>"
-        mock_post.side_effect = [
-            _FakeResponse(200, xml_low),
-            _FakeResponse(200, xml_high),
-        ]
-        file_id = self._client().find_file_id(
-            "W.DS", max_attempts=3, poll_interval=5, min_did=200
+def _mf(request_id, job_id="946923347471796"):
+    return f"MANIFEST_DATA_{job_id}-SCHEDULE_{request_id}_REQUEST_{request_id}.MF"
+
+
+class TestFindExtractFiles(unittest.TestCase):
+    DS = "FscmTopModelAM.MscAnalyticsTopAM.OrdersPVO"
+    JOB = "946923347471796"
+    SLUG = "fscmtopmodelam_mscanalyticstopam_orderspvo"
+
+    def _client(self):
+        return BICCExtractClient(
+            {"base_url": "https://example", "username": "u", "password": "p"}
         )
-        self.assertEqual(file_id, "600")
-        mock_sleep.assert_called_once_with(5)
+
+    def _find(self, client, request_id="9969930", max_attempts=1, poll_interval=0):
+        return client.find_extract_files(
+            self.DS, job_id=self.JOB, request_id=request_id,
+            max_attempts=max_attempts, poll_interval=poll_interval,
+        )
+
+    def test_parse_manifest_filters_by_exact_datastore_slug(self):
+        text = (
+            "PLV_KEY=FUSION_13_0\n"
+            "file_w_ds-batch1-20260101_000000.zip;501;abc\n"
+            "file_w_ds-batch1-20260101_000100.zip;502;def\n"
+            "file_w_ds_other-batch9-20260101_000000.zip;503;123\n"
+            "file_x_ds-batch2-20260101_000000.zip;504;456\n"
+        )
+        files = _parse_manifest(text, "w_ds")
+        self.assertEqual([f.did for f in files], ["501", "502"])
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
-    def test_find_file_id_returns_highest_did_when_multiple_fresh(self, mock_post, _sleep):
-        xml = """<root>
-            <Row><Field name="dID">300</Field></Row>
-            <Row><Field name="dID">500</Field></Row>
-        </root>"""
-        mock_post.return_value = _FakeResponse(200, xml)
-        file_id = self._client().find_file_id("W.DS", max_attempts=1, poll_interval=0, min_did=200)
-        self.assertEqual(file_id, "500")
+    def test_returns_all_files_from_request_manifest(self, _sleep):
+        client = self._client()
+        manifest = (
+            "PLV_KEY=FUSION_13_0\n"
+            f"file_{self.SLUG}-batch2063963794-20260924_024757.zip;7827619;ff58\n"
+            f"file_{self.SLUG}-batch2063963794-20260924_033504.zip;7827665;8b85\n"
+        ).encode()
+        with mock.patch.object(
+            client, "_search", return_value=_rows((7827666, _mf("9969930")))
+        ) as search, mock.patch.object(client, "download", return_value=manifest) as dl:
+            files = self._find(client)
+        self.assertEqual([f.did for f in files], ["7827619", "7827665"])
+        dl.assert_called_once_with("7827666")
+        self.assertIn(f"MANIFEST_DATA_{self.JOB}-", search.call_args[0][0])
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
+    def test_picks_only_manifest_of_this_request(self, _sleep):
+        client = self._client()
+        downloads = {
+            "7000": f"file_{self.SLUG}-batch1-a.zip;6999;m\n".encode(),
+            "8000": f"file_{self.SLUG}-batch2-a.zip;7990;m\n".encode(),
+            "9000": f"file_{self.SLUG}-batch3-a.zip;8990;m\n".encode(),
+        }
+        search = _rows((7000, _mf("111")), (8000, _mf("222")), (9000, _mf("2220")))
+        with mock.patch.object(client, "_search", return_value=search), \
+                mock.patch.object(client, "download", side_effect=downloads.__getitem__) as dl:
+            files = self._find(client, request_id="222")
+        self.assertEqual([f.did for f in files], ["7990"])
+        dl.assert_called_once_with("8000")
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
+    def test_waits_until_request_manifest_appears(self, mock_sleep):
+        client = self._client()
+        searches = [
+            _rows((7000, _mf("111"))),
+            _rows((7000, _mf("111")), (8000, _mf("222"))),
+        ]
+        with mock.patch.object(client, "_search", side_effect=searches), \
+                mock.patch.object(
+                    client, "download", return_value=f"file_{self.SLUG}-b-a.zip;7990;m\n".encode()
+                ) as dl:
+            files = self._find(client, request_id="222", max_attempts=3, poll_interval=5)
+        self.assertEqual([f.did for f in files], ["7990"])
+        mock_sleep.assert_called_once_with(5)
+        dl.assert_called_once_with("8000")
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
+    def test_raises_when_request_manifest_never_appears(self, mock_sleep):
+        client = self._client()
+        with mock.patch.object(client, "_search", return_value=_rows((7000, _mf("111")))), \
+                mock.patch.object(client, "download") as dl:
+            with self.assertRaises(ExtractError) as ctx:
+                self._find(client, request_id="222", max_attempts=2)
+        self.assertIn("request_id=222", str(ctx.exception))
+        dl.assert_not_called()
+        self.assertEqual(mock_sleep.call_count, 1)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
+    def test_manifest_without_table_files_returns_empty(self, _sleep):
+        client = self._client()
+        with mock.patch.object(client, "_search", return_value=_rows((8000, _mf("222")))), \
+                mock.patch.object(client, "download", return_value=b"PLV_KEY=FUSION_13_0\n"):
+            files = self._find(client, request_id="222")
+        self.assertEqual(files, [])
 
 
 # ---------------------------------------------------------------------------
@@ -722,30 +774,37 @@ class TestRunExtractToRows(unittest.TestCase):
         )
 
     @mock.patch.object(BICCExtractClient, "download")
-    @mock.patch.object(BICCExtractClient, "find_file_id", return_value="file-42")
+    @mock.patch.object(
+        BICCExtractClient,
+        "find_extract_files",
+        return_value=[ExtractFile("a.zip", "41"), ExtractFile("b.zip", "42")],
+    )
     @mock.patch.object(BICCExtractClient, "poll", return_value="SUCCEEDED")
     @mock.patch.object(BICCExtractClient, "submit", return_value="REQ-007")
-    @mock.patch.object(BICCExtractClient, "latest_did", return_value=100)
-    def test_success_yields_rows(
-        self, _did, _submit, _poll, _find, mock_download
+    def test_success_yields_rows_from_every_file(
+        self, _submit, _poll, mock_find, mock_download
     ):
-        mock_download.return_value = _make_zip_bytes({"data.csv": "id,val\n1,x\n"})
+        mock_download.side_effect = [
+            _make_zip_bytes({"a.csv": "id,val\n1,x\n2,y\n"}),
+            _make_zip_bytes({"b.csv": "id,val\n3,z\n"}),
+        ]
         rows_iter, info = self._client().run_extract_to_rows(
             "W.DS", "job-1",
             ess_poll_interval=0,
             ucm_poll_interval=0, ucm_max_attempts=1,
         )
         rows = list(rows_iter)
-        self.assertEqual(len(rows), 1)
+        self.assertEqual([r["id"] for r in rows], ["1", "2", "3"])
         self.assertEqual(info["state"], "SUCCEEDED")
-        self.assertEqual(info["file_id"], "file-42")
+        self.assertEqual(info["file_ids"], "41,42")
         self.assertEqual(info["request_id"], "REQ-007")
-        self.assertEqual(info["ucm_did_floor"], "100")
+        mock_find.assert_called_once_with(
+            "W.DS", job_id="job-1", request_id="REQ-007", max_attempts=1, poll_interval=0
+        )
 
     @mock.patch.object(BICCExtractClient, "poll", return_value="ERROR")
     @mock.patch.object(BICCExtractClient, "submit", return_value="REQ-007")
-    @mock.patch.object(BICCExtractClient, "latest_did", return_value=0)
-    def test_fatal_state_raises(self, _did, _submit, _poll):
+    def test_fatal_state_raises(self, _submit, _poll):
         with self.assertRaises(ExtractError) as ctx:
             self._client().run_extract_to_rows(
                 "W.DS", "job-1",
@@ -756,8 +815,7 @@ class TestRunExtractToRows(unittest.TestCase):
 
     @mock.patch.object(BICCExtractClient, "poll", return_value="CANCELLED")
     @mock.patch.object(BICCExtractClient, "submit", return_value="REQ-007")
-    @mock.patch.object(BICCExtractClient, "latest_did", return_value=0)
-    def test_cancelled_state_raises(self, _did, _submit, _poll):
+    def test_cancelled_state_raises(self, _submit, _poll):
         with self.assertRaises(ExtractError):
             self._client().run_extract_to_rows(
                 "W.DS", "job-1",

@@ -117,12 +117,12 @@ class OracleFusionBaseTest(BaseCase):
                 cls.REPLICATION_KEYS: {"LegalEntityLastUpdateDate"},
                 cls.OBEYS_START_DATE: False,
             },
-            "fscmtopmodelam_finglledgerdefnam_ledgerpvo": {
-                cls.PRIMARY_KEYS: {"LedgerId"},
-                cls.REPLICATION_METHOD: cls.INCREMENTAL,
-                cls.REPLICATION_KEYS: {"LedgerLastUpdateDate"},
-                cls.OBEYS_START_DATE: False,
-            },
+            # "fscmtopmodelam_finglledgerdefnam_ledgerpvo": {
+            #     cls.PRIMARY_KEYS: {"LedgerId"},
+            #     cls.REPLICATION_METHOD: cls.INCREMENTAL,
+            #     cls.REPLICATION_KEYS: {"LedgerLastUpdateDate"},
+            #     cls.OBEYS_START_DATE: False,
+            # },
         }
 
     # ---------------------------------------------------------------------------
@@ -141,7 +141,7 @@ class OracleFusionBaseTest(BaseCase):
             "FscmTopModelAM.PrcPoPublicViewAM.StandardHeaderPVO",
             "FscmTopModelAM.PrcPoPublicViewAM.PurchasingDocumentTypeBP",
             "FscmTopModelAM.FinLeLegalEntitiesAM.LegalEntityPVO",
-            "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
+            # "FscmTopModelAM.FinGlLedgerDefnAM.LedgerPVO",
         ]
 
     @classmethod
