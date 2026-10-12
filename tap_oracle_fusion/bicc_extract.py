@@ -18,6 +18,8 @@ from zipfile import BadZipFile, ZipFile
 import requests
 import singer
 
+from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+
 LOGGER = singer.get_logger()
 
 ESS_PATH = "bi/ess/esswebservice"
@@ -57,7 +59,12 @@ class BICCExtractClient:
 
     def __init__(self, config: Mapping[str, Any]) -> None:
         """Initialise from tap config."""
-        self.base_url = str(config.get("base_url", "")).rstrip("/")
+        base_url = str(config.get("base_url", "")).rstrip("/")
+        try:
+            assert_safe_base_url(base_url)
+        except UnsafeBaseURLError as exc:
+            raise ExtractError(f"Invalid base_url: {exc}") from exc
+        self.base_url = base_url
         self.username = str(config.get("username", ""))
         self.password = str(config.get("password", ""))
         self.timeout = float(config.get("request_timeout", 300))

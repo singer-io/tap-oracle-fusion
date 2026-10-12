@@ -372,13 +372,13 @@ class TestEnvelopeAndAttachments(unittest.TestCase):
 class TestBICCExtractClientInit(unittest.TestCase):
     def test_init_attributes(self):
         config = {
-            "base_url": "https://oracle.example.com/",
+            "base_url": "https://oracle-example.oraclecloud.com/",
             "username": "user@example.com",
             "password": "secret",
             "request_timeout": 60,
         }
         client = BICCExtractClient(config)
-        self.assertEqual(client.base_url, "https://oracle.example.com")
+        self.assertEqual(client.base_url, "https://oracle-example.oraclecloud.com")
         self.assertEqual(client.username, "user@example.com")
         self.assertEqual(client.password, "secret")
         self.assertEqual(client.timeout, 60.0)
@@ -391,6 +391,24 @@ class TestBICCExtractClientInit(unittest.TestCase):
     def test_datastore_slug_strips_whitespace(self):
         self.assertEqual(BICCExtractClient.datastore_slug("  MyDS  "), "myds")
 
+    def test_rejects_internal_base_url(self):
+        config = {
+            "base_url": "https://169.254.169.254",
+            "username": "user",
+            "password": "secret",
+        }
+        with self.assertRaises(ExtractError):
+            BICCExtractClient(config)
+
+    def test_rejects_http_base_url(self):
+        config = {
+            "base_url": "http://oracle.example.com",
+            "username": "user",
+            "password": "secret",
+        }
+        with self.assertRaises(ExtractError):
+            BICCExtractClient(config)
+
 
 # ---------------------------------------------------------------------------
 # create_bicc_job
@@ -399,7 +417,7 @@ class TestBICCExtractClientInit(unittest.TestCase):
 class TestCreateBiccJob(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
@@ -458,7 +476,7 @@ class TestCreateBiccJob(unittest.TestCase):
 class TestSubmitAndPoll(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
@@ -528,7 +546,7 @@ class TestSubmitAndPoll(unittest.TestCase):
 class TestSearchAndFindFile(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
@@ -584,7 +602,7 @@ class TestFindExtractFiles(unittest.TestCase):
 
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     def _find(self, client, request_id="9969930", max_attempts=1, poll_interval=0):
@@ -678,7 +696,7 @@ class TestFindExtractFiles(unittest.TestCase):
 class TestDownload(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
@@ -770,7 +788,7 @@ class TestDownload(unittest.TestCase):
 class TestRunExtractToRows(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch.object(BICCExtractClient, "download")
@@ -857,7 +875,7 @@ class TestEnvelopeFunctions(unittest.TestCase):
 class TestPostNetworkErrors(unittest.TestCase):
     def _client(self):
         return BICCExtractClient(
-            {"base_url": "https://example", "username": "u", "password": "p"}
+            {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
