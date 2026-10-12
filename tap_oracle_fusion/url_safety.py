@@ -42,7 +42,10 @@ def assert_safe_base_url(url: str) -> str:
 
     Returns the url unchanged on success. Raises UnsafeBaseURLError otherwise.
     """
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+    except ValueError as exc:
+        raise UnsafeBaseURLError(f"base_url could not be parsed: {exc}") from exc
 
     if parsed.scheme != "https":
         raise UnsafeBaseURLError(f"base_url must use https, got scheme={parsed.scheme!r}")

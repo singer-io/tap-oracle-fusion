@@ -154,6 +154,7 @@ class OracleClient:
             headers=self._auth_headers(),
             auth=self._auth_tuple(),
             timeout=self.request_timeout,
+            allow_redirects=False,
         )
         LOGGER.info("Oracle response: %s %.3fs", url, time.time() - start)
         self._raise_for_http_error(response)

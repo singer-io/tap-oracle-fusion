@@ -244,6 +244,43 @@ class TestGetRecordsWithNextLink(unittest.TestCase):
             result = client.get("some/path")
         self.assertEqual(result, {"items": []})
 
+    def test_get_disables_redirects(self):
+        """OracleClient.get must never auto-follow redirects (SSRF hardening)."""
+        config = {"base_url": "https://example.oraclecloud.com"}
+        client = OracleClient(config)
+
+        import json as _json
+
+        class _DictResponse:
+            status_code = 200
+            text = _json.dumps({"items": []})
+            headers = {}
+
+            def json(self):
+                return {"items": []}
+
+        with mock.patch.object(client.session, "get", return_value=_DictResponse()) as mock_get:
+            client.get("some/path")
+
+        self.assertEqual(mock_get.call_args.kwargs.get("allow_redirects"), False)
+
+    def test_get_rejects_redirect_response(self):
+        """A 3xx response from the session must be raised as a non-retryable error."""
+        config = {"base_url": "https://example.oraclecloud.com"}
+        client = OracleClient(config)
+
+        class _RedirectResponse:
+            status_code = 307
+            text = ""
+            headers = {"Location": "https://attacker.example.com/steal"}
+
+        with mock.patch.object(client.session, "get", return_value=_RedirectResponse()):
+            with self.assertRaises(OracleClientError) as ctx:
+                client.get("some/path")
+
+        self.assertIn("307", str(ctx.exception))
+        self.assertFalse(getattr(ctx.exception, "retryable", False))
+
 
 if __name__ == "__main__":
     unittest.main()

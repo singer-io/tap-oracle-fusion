@@ -108,6 +108,7 @@ class BICCExtractClient:
                 auth=(self.username, self.password),
                 headers={"Accept": "application/json"},
                 timeout=self.timeout,
+                allow_redirects=False,
             )
         except requests.exceptions.Timeout as exc:
             raise ExtractError(
@@ -117,6 +118,11 @@ class BICCExtractClient:
             raise ExtractError(
                 f"create-job connection error: {exc}"
             ) from exc
+        if 300 <= response.status_code < 400:
+            raise ExtractError(
+                f"create-job received unexpected redirect status={response.status_code} "
+                f"location={response.headers.get('Location', '')!r}"
+            )
         try:
             body = response.json()
         except ValueError:
@@ -203,13 +209,19 @@ class BICCExtractClient:
         )
 
     def _post(self, url: str, envelope: str) -> requests.Response:
-        """Send a SOAP/XML POST request and return the raw response."""
+        """Send a SOAP/XML POST request and return the raw response.
+
+        Redirects are disabled: the envelope body carries the username/password
+        in plaintext, so a 307/308 from an allow-listed host must never be
+        followed to an arbitrary redirect target.
+        """
         try:
-            return requests.post(
+            response = requests.post(
                 url,
                 data=envelope.encode("utf-8"),
                 headers={"Content-Type": "text/xml; charset=utf-8"},
                 timeout=self.timeout,
+                allow_redirects=False,
             )
         except requests.exceptions.Timeout as exc:
             raise ExtractError(
@@ -219,6 +231,13 @@ class BICCExtractClient:
             raise ExtractError(
                 f"SOAP request connection error to {url}: {exc}"
             ) from exc
+
+        if 300 <= response.status_code < 400:
+            raise ExtractError(
+                f"SOAP request to {url} received unexpected redirect "
+                f"status={response.status_code} location={response.headers.get('Location', '')!r}"
+            )
+        return response
 
     def submit(self, datastore: str, job_id: str) -> str:
         """Submit an ESS extract request and return the ESS request ID."""

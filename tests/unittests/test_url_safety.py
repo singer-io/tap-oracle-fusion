@@ -38,6 +38,12 @@ class TestAssertSafeBaseUrl(unittest.TestCase):
         with self.assertRaises(UnsafeBaseURLError):
             assert_safe_base_url("https://")
 
+    def test_rejects_malformed_ipv6_authority(self):
+        # urlparse() itself raises ValueError for an unmatched IPv6 bracket;
+        # that must be normalized to UnsafeBaseURLError, not leak out raw.
+        with self.assertRaises(UnsafeBaseURLError):
+            assert_safe_base_url("https://[::1")
+
     def test_rejects_localhost(self):
         with self.assertRaises(UnsafeBaseURLError):
             assert_safe_base_url("https://localhost")

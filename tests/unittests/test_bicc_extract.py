@@ -468,6 +468,24 @@ class TestCreateBiccJob(unittest.TestCase):
         call_json = mock_put.call_args[1]["json"]
         self.assertEqual(call_json["name"], "my_custom")
 
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    def test_disables_redirects(self, mock_put):
+        mock_put.return_value = _FakeResponse(
+            200, json.dumps({"status": "SUCCESS", "id": "job-123"})
+        )
+        self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
+        self.assertEqual(mock_put.call_args.kwargs.get("allow_redirects"), False)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    def test_rejects_redirect_response(self, mock_put):
+        mock_put.return_value = _FakeResponse(
+            307, headers={"Location": "https://attacker.example.com/steal"}
+        )
+        with self.assertRaises(ExtractError) as ctx:
+            self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
+        self.assertIn("redirect", str(ctx.exception))
+        self.assertIn("307", str(ctx.exception))
+
 
 # ---------------------------------------------------------------------------
 # submit and poll
@@ -527,6 +545,23 @@ class TestSubmitAndPoll(unittest.TestCase):
         with self.assertRaises(ExtractError) as ctx:
             self._client().poll("REQ-001", poll_interval=0)
         self.assertIn("missing state", str(ctx.exception))
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_submit_disables_redirects(self, mock_post):
+        xml = "<root><requestId><value>REQ-001</value></requestId></root>"
+        mock_post.return_value = _FakeResponse(200, xml)
+        self._client().submit("W.DS", "job-1")
+        self.assertEqual(mock_post.call_args.kwargs.get("allow_redirects"), False)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_submit_rejects_redirect_response(self, mock_post):
+        mock_post.return_value = _FakeResponse(
+            308, headers={"Location": "https://attacker.example.com/steal"}
+        )
+        with self.assertRaises(ExtractError) as ctx:
+            self._client().submit("W.DS", "job-1")
+        self.assertIn("redirect", str(ctx.exception))
+        self.assertIn("308", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
     @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
