@@ -93,35 +93,20 @@ class OracleFusionPaginationTest(OracleFusionBaseTest):
                     ),
                 )
 
-    def test_no_duplicate_records_for_streams_with_primary_keys(self):
-        """For streams that declare primary keys, verify that every PK tuple
-        is unique in the extracted data.
-
-        Duplicate records can appear if the UCM file was downloaded twice or
-        if the CSV parsing logic incorrectly reprocesses rows.
-        """
-        streams_with_pks = {
-            s for s in self.streams_to_test() if self.expected_primary_keys(s)
-        }
-
-        for stream in streams_with_pks:
+    def test_no_duplicate_rows(self):
+        """Exact duplicate rows should be removed when parsing BICC files."""
+        for stream in self.streams_to_test():
             with self.subTest(stream=stream):
-                expected_pks = self.expected_primary_keys(stream)
                 messages = self._synced_records.get(stream, {}).get("messages", [])
                 upsert_records = [m["data"] for m in messages if m.get("action") == "upsert"]
-
-                pk_tuples = [
-                    tuple(record.get(pk) for pk in sorted(expected_pks))
-                    for record in upsert_records
-                ]
-                unique_pk_tuples = set(pk_tuples)
+                unique_records = {tuple(sorted(record.items())) for record in upsert_records}
 
                 self.assertEqual(
-                    len(pk_tuples),
-                    len(unique_pk_tuples),
+                    len(upsert_records),
+                    len(unique_records),
                     msg=(
-                        f"Stream '{stream}' has {len(pk_tuples) - len(unique_pk_tuples)} "
-                        f"duplicate record(s) by primary key {sorted(expected_pks)}."
+                        f"Stream '{stream}' has {len(upsert_records) - len(unique_records)} "
+                        "exact duplicate record(s)."
                     ),
                 )
 
