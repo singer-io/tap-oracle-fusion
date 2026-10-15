@@ -84,7 +84,19 @@ class TestAssertSafeBaseUrl(unittest.TestCase):
         with self.assertRaises(UnsafeBaseURLError):
             assert_safe_base_url("https://8.8.8.8")
 
+    def test_allows_default_https_port(self):
+        self.assertEqual(
+            assert_safe_base_url("https://example.oraclecloud.com:443"),
+            "https://example.oraclecloud.com:443",
+        )
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_rejects_non_standard_port(self):
+        # An otherwise allow-listed host paired with a non-standard port
+        # (e.g. an attacker-controlled listener fronting the same hostname)
+        # must still be rejected.
+        with self.assertRaises(UnsafeBaseURLError):
+            assert_safe_base_url("https://demo.oraclecloud.com:8443")
 
+    def test_rejects_invalid_port(self):
+        with self.assertRaises(UnsafeBaseURLError):
+            assert_safe_base_url("https://example.oraclecloud.com:999999")

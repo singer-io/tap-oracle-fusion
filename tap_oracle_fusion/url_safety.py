@@ -11,6 +11,8 @@ This module enforces that base_url:
   - does not embed credentials in the URL itself
   - has a hostname ending in one of the allowed Oracle domains below, so
     credentials can only ever be sent to genuine Oracle-operated endpoints
+  - uses the default HTTPS port (443), so a validated Oracle host cannot be
+    paired with an arbitrary non-standard port fronted by attacker infra
 """
 from urllib.parse import urlparse
 
@@ -23,6 +25,11 @@ ALLOWED_BASE_URL_DOMAINS = (
     "oraclecloud.com",
     "oraclepdemos.com",
 )
+
+# Only the default HTTPS port is allowed. Oracle Fusion/BICC endpoints are
+# always served on 443; accepting other ports would let an otherwise
+# allow-listed hostname be repointed at a non-standard listener.
+ALLOWED_BASE_URL_PORTS = (443,)
 
 
 class UnsafeBaseURLError(ValueError):
@@ -63,5 +70,15 @@ def assert_safe_base_url(url: str) -> str:
             f"(allowed: {', '.join(ALLOWED_BASE_URL_DOMAINS)})"
         )
 
-    return url
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise UnsafeBaseURLError(f"base_url has an invalid port: {exc}") from exc
 
+    if port is not None and port not in ALLOWED_BASE_URL_PORTS:
+        raise UnsafeBaseURLError(
+            f"base_url port {port} is not allowed "
+            f"(allowed: {', '.join(str(p) for p in ALLOWED_BASE_URL_PORTS)} or none/default)"
+        )
+
+    return url
