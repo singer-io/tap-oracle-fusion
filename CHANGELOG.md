@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.3
+  * Preserve distinct BICC rows that share a declared primary key.
+  * Fail sync on BICC extraction errors instead of silently skipping streams.
+
 ## 0.0.2
   * Fixed BICC extraction to read all files from each run instead of only the last file, preventing missing records in multi-file extracts.
 
