@@ -13,12 +13,24 @@ class _FakeResponse:
 
 class TestOracleClient(unittest.TestCase):
     def test_resolve_base_url_prefers_explicit_base_url(self):
-        config = {"base_url": "https://example.oracle.com/"}
-        self.assertEqual(OracleClient._resolve_base_url(config), "https://example.oracle.com")
+        config = {"base_url": "https://example.oraclecloud.com/"}
+        self.assertEqual(OracleClient._resolve_base_url(config), "https://example.oraclecloud.com")
 
     def test_resolve_base_url_raises_when_insufficient_config(self):
         with self.assertRaises(OracleClientError):
             OracleClient._resolve_base_url({})
+
+    def test_resolve_base_url_rejects_http_scheme(self):
+        with self.assertRaises(OracleClientError):
+            OracleClient._resolve_base_url({"base_url": "http://example.oracle.com"})
+
+    def test_resolve_base_url_rejects_private_ip(self):
+        with self.assertRaises(OracleClientError):
+            OracleClient._resolve_base_url({"base_url": "https://169.254.169.254"})
+
+    def test_resolve_base_url_rejects_loopback(self):
+        with self.assertRaises(OracleClientError):
+            OracleClient._resolve_base_url({"base_url": "https://localhost"})
 
     def test_raise_for_http_error_429_sets_retry_after(self):
         response = _FakeResponse(429, text="Too many requests", headers={"Retry-After": "7"})
@@ -85,7 +97,7 @@ class TestOracleClient(unittest.TestCase):
         self.assertEqual(records, [{"name": "Worker"}, {"name": "Department"}])
 
     def test_get_records_uses_has_more_offset_pagination(self):
-        config = {"base_url": "https://example", "page_size": 2}
+        config = {"base_url": "https://example.oraclecloud.com", "page_size": 2}
         client = OracleClient(config)
         observed_params = []
 
