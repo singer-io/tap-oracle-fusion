@@ -328,16 +328,6 @@ class TestSanitizeRecordDatetimes(unittest.TestCase):
         self.assertEqual(result, {"other_field": "value"})
 
 
-class TestIsUnsupportedDatastoreError(unittest.TestCase):
-    def test_jbo_and_fk_constraint_is_unsupported(self):
-        err = Exception("JBO-26048 error C_JOB_DATA_STORE_REL_C_DA_FK1 constraint")
-        self.assertTrue(sync_module._is_unsupported_datastore_create_job_error(err))
-
-    def test_other_error_is_not_unsupported(self):
-        err = Exception("Some other error")
-        self.assertFalse(sync_module._is_unsupported_datastore_create_job_error(err))
-
-
 class TestBookmarkHelpers(unittest.TestCase):
     def test_bookmark_value_returns_default(self):
         result = sync_module._bookmark_value({}, "stream", "LastUpdateDate", "2020-01-01")
@@ -475,54 +465,18 @@ class TestSyncBiccStream(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
     @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
     @mock.patch("tap_oracle_fusion.sync.OracleClient")
-    def test_bicc_stream_pk_deduplication(
+    def test_bicc_stream_emits_distinct_records_with_same_pk(
         self, _client_cls, mock_bicc_cls, _ws, mock_wr, _wstate
     ):
+        """Oracle BICC keys are not necessarily unique across extracted rows."""
         mock_bicc = mock_bicc_cls.return_value
         mock_bicc.create_bicc_job.return_value = "job-1"
-        # Two records with the same PK → only one should be emitted
+        expected_records = [
+            {"Id": "1", "Name": "Alice"},
+            {"Id": "1", "Name": "Alice_v2"},
+        ]
         mock_bicc.run_extract_to_rows.return_value = (
-            iter([
-                {"Id": "1", "Name": "Alice"},
-                {"Id": "1", "Name": "Alice"},
-            ]),
-            {"state": "SUCCEEDED"},
-        )
-
-        entry = _make_entry(
-            "worker",
-            oracle_path="biacm/rest/meta/datastores/FscmTopModelAM.Worker",
-            datastore_key="FscmTopModelAM.Worker",
-            key_properties=["Id"],
-        )
-        catalog = _make_catalog(entry)
-        sync_module.sync({"base_url": "https://example"}, catalog, {})
-        self.assertEqual(mock_wr.call_count, 1)
-
-    @mock.patch("tap_oracle_fusion.sync.singer.write_state")
-    @mock.patch("tap_oracle_fusion.sync.singer.write_record")
-    @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
-    @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
-    @mock.patch("tap_oracle_fusion.sync.OracleClient")
-    def test_bicc_stream_pk_deduplication_keeps_first_on_value_change(
-        self, _client_cls, mock_bicc_cls, _ws, mock_wr, _wstate
-    ):
-        """Same PK but DIFFERENT values: dedup still keeps only the first row.
-
-        This documents a known limitation: if BICC legitimately emits multiple
-        change events for the same PK in a single extract (e.g. the row was
-        updated twice within the extract window), only the first event is
-        emitted and the later update is silently dropped.  If Oracle BICC
-        guarantees at-most-one row per PK per extract, this behavior is safe;
-        if it does not, downstream data may be stale.
-        """
-        mock_bicc = mock_bicc_cls.return_value
-        mock_bicc.create_bicc_job.return_value = "job-1"
-        mock_bicc.run_extract_to_rows.return_value = (
-            iter([
-                {"Id": "1", "Name": "Alice"},   # first event
-                {"Id": "1", "Name": "Alice_v2"}, # later update — same PK, different value
-            ]),
+            iter(expected_records),
             {"state": "SUCCEEDED"},
         )
 
@@ -542,10 +496,8 @@ class TestSyncBiccStream(unittest.TestCase):
         )
         catalog = _make_catalog(entry)
         sync_module.sync({"base_url": "https://example"}, catalog, {})
-        # Only the first event survives; the later update is dropped.
-        self.assertEqual(mock_wr.call_count, 1)
-        emitted_record = mock_wr.call_args[0][1]
-        self.assertEqual(emitted_record.get("Name"), "Alice")
+        emitted_records = [call.args[1] for call in mock_wr.call_args_list]
+        self.assertEqual(emitted_records, expected_records)
 
 
     @mock.patch("tap_oracle_fusion.sync.singer.write_state")
@@ -553,7 +505,7 @@ class TestSyncBiccStream(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
     @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
     @mock.patch("tap_oracle_fusion.sync.OracleClient")
-    def test_bicc_unsupported_datastore_error_skips_stream(
+    def test_bicc_unsupported_datastore_error_is_raised(
         self, _client_cls, mock_bicc_cls, _ws, mock_wr, _wstate
     ):
         from tap_oracle_fusion.bicc_extract import ExtractError
@@ -569,8 +521,8 @@ class TestSyncBiccStream(unittest.TestCase):
             datastore_key="FscmTopModelAM.Worker",
         )
         catalog = _make_catalog(entry)
-        # Should not raise — stream is silently skipped
-        sync_module.sync({"base_url": "https://example"}, catalog, {})
+        with self.assertRaisesRegex(ExtractError, "JBO-26048"):
+            sync_module.sync({"base_url": "https://example"}, catalog, {})
         mock_wr.assert_not_called()
 
     @mock.patch("tap_oracle_fusion.sync.singer.write_state")
@@ -578,13 +530,16 @@ class TestSyncBiccStream(unittest.TestCase):
     @mock.patch("tap_oracle_fusion.sync.singer.write_schema")
     @mock.patch("tap_oracle_fusion.sync.BICCExtractClient")
     @mock.patch("tap_oracle_fusion.sync.OracleClient")
-    def test_bicc_ess_extract_error_skips_stream(
+    def test_bicc_ess_extract_error_is_raised(
         self, _client_cls, mock_bicc_cls, _ws, mock_wr, _wstate
     ):
         from tap_oracle_fusion.bicc_extract import ExtractError
 
         mock_bicc = mock_bicc_cls.return_value
-        mock_bicc.create_bicc_job.side_effect = ExtractError("ESS job failed: unexpected error")
+        mock_bicc.create_bicc_job.return_value = "job-1"
+        mock_bicc.run_extract_to_rows.side_effect = ExtractError(
+            "ESS job failed: unexpected error"
+        )
 
         entry = _make_entry(
             "worker",
@@ -592,7 +547,8 @@ class TestSyncBiccStream(unittest.TestCase):
             datastore_key="FscmTopModelAM.Worker",
         )
         catalog = _make_catalog(entry)
-        sync_module.sync({"base_url": "https://example"}, catalog, {})
+        with self.assertRaisesRegex(ExtractError, "ESS job failed: unexpected error"):
+            sync_module.sync({"base_url": "https://example"}, catalog, {})
         mock_wr.assert_not_called()
 
     @mock.patch("tap_oracle_fusion.sync.singer.write_state")

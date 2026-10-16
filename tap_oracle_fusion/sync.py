@@ -1,6 +1,5 @@
 """Sync logic for Oracle Fusion REST and BICC datastore streams."""
 from datetime import datetime, timezone
-import hashlib
 import math
 from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.parse import unquote
@@ -190,14 +189,6 @@ def _sanitize_record_datetimes_for_schema(
     return sanitized
 
 
-def _is_unsupported_datastore_create_job_error(error: Exception) -> bool:
-    message = str(error)
-    return (
-        "JBO-26048" in message
-        and "C_JOB_DATA_STORE_REL_C_DA_FK1" in message
-    )
-
-
 def _metadata_path_is_bicc(path: str) -> bool:
     return path.startswith("biacm/rest/meta/datastores/")
 
@@ -311,28 +302,16 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         ucm_max_attempts=ucm_max_attempts,
                     )
                 except ExtractError as err:
-                    if _is_unsupported_datastore_create_job_error(err):
-                        LOGGER.warning(
-                            "Skipping stream=%s datastore=%s due to unsupported "
-                            "Oracle BICC create-job constraint: %s",
-                            stream_name,
-                            datastore,
-                            err,
-                        )
-                        update_currently_syncing(state, None)
-                        continue
                     LOGGER.error(
-                        "Skipping stream=%s datastore=%s due to ESS extract error: %s",
+                        "BICC extract failed for stream=%s datastore=%s: %s",
                         stream_name,
                         datastore,
                         err,
                     )
-                    update_currently_syncing(state, None)
-                    continue
+                    raise
             else:
                 records_iter = client.get_records(path, params=params)
 
-            seen_bicc_pks: set = set()
             for record in records_iter:
                 if is_bicc_stream:
                     record = _normalize_record_keys_for_schema(record, schema_property_lookup)
@@ -342,12 +321,6 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                         stream_name,
                         warned_invalid_datetime_values,
                     )
-                    if stream_key_properties:
-                        pk_tuple = tuple(record.get(pk) for pk in sorted(stream_key_properties))
-                        pk_hash = hashlib.sha256(repr(pk_tuple).encode()).digest()
-                        if pk_hash in seen_bicc_pks:
-                            continue
-                        seen_bicc_pks.add(pk_hash)
                     if replication_key and bookmark:
                         record_replication_value = record.get(replication_key)
                         if record_replication_value:
