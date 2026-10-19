@@ -7,6 +7,8 @@ import backoff
 import requests
 import singer
 
+from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+
 LOGGER = singer.get_logger()
 REQUEST_TIMEOUT = 300
 
@@ -36,12 +38,18 @@ class OracleClient:
 
     @staticmethod
     def _resolve_base_url(config: Mapping[str, Any]) -> str:
-        if config.get("base_url"):
-            return str(config["base_url"]).rstrip("/")
+        if not config.get("base_url"):
+            raise OracleClientError(
+                "Unable to resolve Oracle base URL. Provide base_url."
+            )
 
-        raise OracleClientError(
-            "Unable to resolve Oracle base URL. Provide base_url."
-        )
+        base_url = str(config["base_url"]).rstrip("/")
+        try:
+            assert_safe_base_url(base_url)
+        except UnsafeBaseURLError as exc:
+            raise OracleClientError(f"Invalid base_url: {exc}") from exc
+
+        return base_url
 
     def _auth_headers(self) -> Dict[str, str]:
         return {
@@ -146,6 +154,7 @@ class OracleClient:
             headers=self._auth_headers(),
             auth=self._auth_tuple(),
             timeout=self.request_timeout,
+            allow_redirects=False,
         )
         LOGGER.info("Oracle response: %s %.3fs", url, time.time() - start)
         self._raise_for_http_error(response)

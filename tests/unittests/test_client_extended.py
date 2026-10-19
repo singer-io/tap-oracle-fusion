@@ -19,22 +19,22 @@ class _FakeResponse:
 
 class TestAuthMethods(unittest.TestCase):
     def test_auth_headers_returns_accept_json(self):
-        client = OracleClient({"base_url": "https://example"})
+        client = OracleClient({"base_url": "https://example.oraclecloud.com"})
         headers = client._auth_headers()
         self.assertEqual(headers["Accept"], "application/json")
 
     def test_auth_tuple_with_credentials(self):
         client = OracleClient(
-            {"base_url": "https://example", "username": "user", "password": "pass"}
+            {"base_url": "https://example.oraclecloud.com", "username": "user", "password": "pass"}
         )
         self.assertEqual(client._auth_tuple(), ("user", "pass"))
 
     def test_auth_tuple_without_credentials_returns_none(self):
-        client = OracleClient({"base_url": "https://example"})
+        client = OracleClient({"base_url": "https://example.oraclecloud.com"})
         self.assertIsNone(client._auth_tuple())
 
     def test_auth_tuple_with_only_username_returns_none(self):
-        client = OracleClient({"base_url": "https://example", "username": "user"})
+        client = OracleClient({"base_url": "https://example.oraclecloud.com", "username": "user"})
         self.assertIsNone(client._auth_tuple())
 
 
@@ -169,7 +169,7 @@ class TestParseNextLink(unittest.TestCase):
 
 class TestGetRecordsWithNextLink(unittest.TestCase):
     def test_follows_next_link_pagination(self):
-        config = {"base_url": "https://example", "page_size": 2}
+        config = {"base_url": "https://example.oraclecloud.com", "page_size": 2}
         client = OracleClient(config)
         call_count = [0]
 
@@ -194,7 +194,7 @@ class TestGetRecordsWithNextLink(unittest.TestCase):
         self.assertEqual(call_count[0], 2)
 
     def test_skips_non_dict_records(self):
-        config = {"base_url": "https://example"}
+        config = {"base_url": "https://example.oraclecloud.com"}
         client = OracleClient(config)
 
         def fake_get(path, params=None):
@@ -207,7 +207,7 @@ class TestGetRecordsWithNextLink(unittest.TestCase):
 
     def test_raises_on_non_dict_json_response(self):
         """OracleClient.get raises when the JSON body is not a dict."""
-        config = {"base_url": "https://example"}
+        config = {"base_url": "https://example.oraclecloud.com"}
         client = OracleClient(config)
 
         import json as _json
@@ -227,7 +227,7 @@ class TestGetRecordsWithNextLink(unittest.TestCase):
 
     def test_get_returns_dict_payload_via_session(self):
         """OracleClient.get returns the dict payload on a successful call."""
-        config = {"base_url": "https://example"}
+        config = {"base_url": "https://example.oraclecloud.com"}
         client = OracleClient(config)
 
         import json as _json
@@ -243,6 +243,43 @@ class TestGetRecordsWithNextLink(unittest.TestCase):
         with mock.patch.object(client.session, "get", return_value=_DictResponse()):
             result = client.get("some/path")
         self.assertEqual(result, {"items": []})
+
+    def test_get_disables_redirects(self):
+        """OracleClient.get must never auto-follow redirects (SSRF hardening)."""
+        config = {"base_url": "https://example.oraclecloud.com"}
+        client = OracleClient(config)
+
+        import json as _json
+
+        class _DictResponse:
+            status_code = 200
+            text = _json.dumps({"items": []})
+            headers = {}
+
+            def json(self):
+                return {"items": []}
+
+        with mock.patch.object(client.session, "get", return_value=_DictResponse()) as mock_get:
+            client.get("some/path")
+
+        self.assertEqual(mock_get.call_args.kwargs.get("allow_redirects"), False)
+
+    def test_get_rejects_redirect_response(self):
+        """A 3xx response from the session must be raised as a non-retryable error."""
+        config = {"base_url": "https://example.oraclecloud.com"}
+        client = OracleClient(config)
+
+        class _RedirectResponse:
+            status_code = 307
+            text = ""
+            headers = {"Location": "https://attacker.example.com/steal"}
+
+        with mock.patch.object(client.session, "get", return_value=_RedirectResponse()):
+            with self.assertRaises(OracleClientError) as ctx:
+                client.get("some/path")
+
+        self.assertIn("307", str(ctx.exception))
+        self.assertFalse(getattr(ctx.exception, "retryable", False))
 
 
 if __name__ == "__main__":

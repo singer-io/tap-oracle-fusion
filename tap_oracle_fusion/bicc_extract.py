@@ -18,6 +18,8 @@ from zipfile import BadZipFile, ZipFile
 import requests
 import singer
 
+from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+
 LOGGER = singer.get_logger()
 
 ESS_PATH = "bi/ess/esswebservice"
@@ -57,7 +59,12 @@ class BICCExtractClient:
 
     def __init__(self, config: Mapping[str, Any]) -> None:
         """Initialise from tap config."""
-        self.base_url = str(config.get("base_url", "")).rstrip("/")
+        base_url = str(config.get("base_url", "")).rstrip("/")
+        try:
+            assert_safe_base_url(base_url)
+        except UnsafeBaseURLError as exc:
+            raise ExtractError(f"Invalid base_url: {exc}") from exc
+        self.base_url = base_url
         self.username = str(config.get("username", ""))
         self.password = str(config.get("password", ""))
         self.timeout = float(config.get("request_timeout", 300))
@@ -101,6 +108,7 @@ class BICCExtractClient:
                 auth=(self.username, self.password),
                 headers={"Accept": "application/json"},
                 timeout=self.timeout,
+                allow_redirects=False,
             )
         except requests.exceptions.Timeout as exc:
             raise ExtractError(
@@ -110,6 +118,11 @@ class BICCExtractClient:
             raise ExtractError(
                 f"create-job connection error: {exc}"
             ) from exc
+        if 300 <= response.status_code < 400:
+            raise ExtractError(
+                f"create-job received unexpected redirect status={response.status_code} "
+                f"location={response.headers.get('Location', '')!r}"
+            )
         try:
             body = response.json()
         except ValueError:
@@ -196,13 +209,19 @@ class BICCExtractClient:
         )
 
     def _post(self, url: str, envelope: str) -> requests.Response:
-        """Send a SOAP/XML POST request and return the raw response."""
+        """Send a SOAP/XML POST request and return the raw response.
+
+        Redirects are disabled: the envelope body carries the username/password
+        in plaintext, so a 307/308 from an allow-listed host must never be
+        followed to an arbitrary redirect target.
+        """
         try:
-            return requests.post(
+            response = requests.post(
                 url,
                 data=envelope.encode("utf-8"),
                 headers={"Content-Type": "text/xml; charset=utf-8"},
                 timeout=self.timeout,
+                allow_redirects=False,
             )
         except requests.exceptions.Timeout as exc:
             raise ExtractError(
@@ -212,6 +231,13 @@ class BICCExtractClient:
             raise ExtractError(
                 f"SOAP request connection error to {url}: {exc}"
             ) from exc
+
+        if 300 <= response.status_code < 400:
+            raise ExtractError(
+                f"SOAP request to {url} received unexpected redirect "
+                f"status={response.status_code} location={response.headers.get('Location', '')!r}"
+            )
+        return response
 
     def submit(self, datastore: str, job_id: str) -> str:
         """Submit an ESS extract request and return the ESS request ID."""
