@@ -1,7 +1,15 @@
 """Tests for tap_oracle_fusion.url_safety SSRF guard."""
+import socket
 import unittest
+from unittest.mock import patch
 
-from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+from tap_oracle_fusion.url_safety import (
+    assert_safe_base_url,
+    build_safe_session,
+    UnsafeBaseURLError,
+    _is_public_ip,
+    _resolve_to_public_ip,
+)
 
 
 class TestAssertSafeBaseUrl(unittest.TestCase):
@@ -114,3 +122,98 @@ class TestAssertSafeBaseUrl(unittest.TestCase):
     def test_rejects_backslash_anywhere(self):
         with self.assertRaises(UnsafeBaseURLError):
             assert_safe_base_url("https://example.oraclecloud.com\\")
+
+
+class TestBuildSafeSessionConnectionTimeIPValidation(unittest.TestCase):
+    """An allow-listed Oracle hostname can still resolve to a private/
+    link-local address (bad DNS config, or DNS rebinding). The session
+    returned by build_safe_session() must refuse to connect in that case,
+    and must do so before any outbound TCP connection is attempted.
+    """
+
+    @staticmethod
+    def _fake_getaddrinfo(ip_address):
+        def _getaddrinfo(host, port, *args, **kwargs):  # pylint: disable=unused-argument
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip_address, port))]
+
+        return _getaddrinfo
+
+    def test_rejects_allowlisted_host_resolving_to_loopback(self):
+        session = build_safe_session()
+        with patch(
+            "tap_oracle_fusion.url_safety.socket.getaddrinfo",
+            side_effect=self._fake_getaddrinfo("127.0.0.1"),
+        ), patch(
+            "tap_oracle_fusion.url_safety.urllib3_connection.create_connection"
+        ) as mock_create_connection:
+            with self.assertRaises(UnsafeBaseURLError):
+                session.get("https://evil-but-allowlisted.oraclecloud.com/resource")
+        # The request must be refused before any outbound socket is opened.
+        mock_create_connection.assert_not_called()
+
+    def test_rejects_allowlisted_host_resolving_to_link_local_metadata_ip(self):
+        session = build_safe_session()
+        with patch(
+            "tap_oracle_fusion.url_safety.socket.getaddrinfo",
+            side_effect=self._fake_getaddrinfo("169.254.169.254"),
+        ), patch(
+            "tap_oracle_fusion.url_safety.urllib3_connection.create_connection"
+        ) as mock_create_connection:
+            with self.assertRaises(UnsafeBaseURLError):
+                session.get("https://evil-but-allowlisted.oraclecloud.com/resource")
+        mock_create_connection.assert_not_called()
+
+    def test_rejects_allowlisted_host_resolving_to_shared_address_space(self):
+        # RFC 6598 carrier-grade NAT space (100.64.0.0/10): CPython's
+        # ipaddress.is_private/is_reserved both miss this range, so it must
+        # be caught by the is_global check instead.
+        session = build_safe_session()
+        with patch(
+            "tap_oracle_fusion.url_safety.socket.getaddrinfo",
+            side_effect=self._fake_getaddrinfo("100.64.0.1"),
+        ), patch(
+            "tap_oracle_fusion.url_safety.urllib3_connection.create_connection"
+        ) as mock_create_connection:
+            with self.assertRaises(UnsafeBaseURLError):
+                session.get("https://evil-but-allowlisted.oraclecloud.com/resource")
+        mock_create_connection.assert_not_called()
+
+
+class TestResolveToPublicIp(unittest.TestCase):
+    """Direct regression tests for the resolver-level IP validation."""
+
+    @staticmethod
+    def _fake_getaddrinfo(ip_address):
+        def _getaddrinfo(host, port, *args, **kwargs):  # pylint: disable=unused-argument
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip_address, port))]
+
+        return _getaddrinfo
+
+    def test_rejects_shared_address_space(self):
+        with patch(
+            "tap_oracle_fusion.url_safety.socket.getaddrinfo",
+            side_effect=self._fake_getaddrinfo("100.64.0.1"),
+        ):
+            with self.assertRaises(UnsafeBaseURLError):
+                _resolve_to_public_ip("evil-but-allowlisted.oraclecloud.com", 443)
+
+    def test_allows_public_ip(self):
+        with patch(
+            "tap_oracle_fusion.url_safety.socket.getaddrinfo",
+            side_effect=self._fake_getaddrinfo("8.8.8.8"),
+        ):
+            self.assertEqual(
+                _resolve_to_public_ip("example.oraclecloud.com", 443), "8.8.8.8"
+            )
+
+    def test_is_public_ip_rejects_shared_address_space_boundaries(self):
+        self.assertFalse(_is_public_ip("100.64.0.0"))
+        self.assertFalse(_is_public_ip("100.64.0.1"))
+        self.assertFalse(_is_public_ip("100.127.255.254"))
+
+    def test_is_public_ip_allows_addresses_just_outside_shared_space(self):
+        self.assertTrue(_is_public_ip("100.63.255.255"))
+        self.assertTrue(_is_public_ip("100.128.0.0"))
+
+    def test_is_public_ip_rejects_multicast(self):
+        self.assertFalse(_is_public_ip("224.0.0.251"))

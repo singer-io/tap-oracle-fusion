@@ -420,7 +420,7 @@ class TestCreateBiccJob(unittest.TestCase):
             {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_success(self, mock_put):
         mock_put.return_value = _FakeResponse(
             200, json.dumps({"status": "SUCCESS", "id": "job-123"})
@@ -428,20 +428,20 @@ class TestCreateBiccJob(unittest.TestCase):
         job_id = self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
         self.assertEqual(job_id, "job-123")
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_http_400_raises_extract_error(self, mock_put):
         mock_put.return_value = _FakeResponse(400, "bad request")
         with self.assertRaises(ExtractError) as ctx:
             self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
         self.assertIn("create-job failed", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_non_json_body_raises(self, mock_put):
         mock_put.return_value = _FakeResponse(200, "not-json-at-all")
         with self.assertRaises(ExtractError):
             self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_non_success_status_raises(self, mock_put):
         mock_put.return_value = _FakeResponse(
             200, json.dumps({"status": "FAILED", "id": "x"})
@@ -450,7 +450,7 @@ class TestCreateBiccJob(unittest.TestCase):
             self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
         self.assertIn("non-success", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_missing_id_raises(self, mock_put):
         mock_put.return_value = _FakeResponse(
             200, json.dumps({"status": "SUCCESS", "id": ""})
@@ -459,7 +459,7 @@ class TestCreateBiccJob(unittest.TestCase):
             self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
         self.assertIn("missing id", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_custom_job_name(self, mock_put):
         mock_put.return_value = _FakeResponse(
             200, json.dumps({"status": "SUCCESS", "id": "job-456"})
@@ -468,7 +468,7 @@ class TestCreateBiccJob(unittest.TestCase):
         call_json = mock_put.call_args[1]["json"]
         self.assertEqual(call_json["name"], "my_custom")
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_disables_redirects(self, mock_put):
         mock_put.return_value = _FakeResponse(
             200, json.dumps({"status": "SUCCESS", "id": "job-123"})
@@ -476,7 +476,7 @@ class TestCreateBiccJob(unittest.TestCase):
         self._client().create_bicc_job("W.DS", "2020-01-01T00:00:00.000")
         self.assertEqual(mock_put.call_args.kwargs.get("allow_redirects"), False)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.put")
+    @mock.patch("requests.Session.put")
     def test_rejects_redirect_response(self, mock_put):
         mock_put.return_value = _FakeResponse(
             307, headers={"Location": "https://attacker.example.com/steal"}
@@ -497,14 +497,14 @@ class TestSubmitAndPoll(unittest.TestCase):
             {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_submit_returns_request_id(self, mock_post):
         xml = "<root><requestId><value>REQ-001</value></requestId></root>"
         mock_post.return_value = _FakeResponse(200, xml)
         req_id = self._client().submit("W.DS", "job-1")
         self.assertEqual(req_id, "REQ-001")
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_submit_raises_when_no_request_id(self, mock_post):
         fault_xml = "<root><faultstring>Auth failed</faultstring></root>"
         mock_post.return_value = _FakeResponse(200, fault_xml)
@@ -514,21 +514,21 @@ class TestSubmitAndPoll(unittest.TestCase):
         self.assertIn("Auth failed", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_poll_succeeded(self, mock_post, _sleep):
         mock_post.return_value = _FakeResponse(200, "<root><state>SUCCEEDED</state></root>")
         state = self._client().poll("REQ-001", poll_interval=0)
         self.assertEqual(state, "SUCCEEDED")
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_poll_warning_state_returned(self, mock_post, _sleep):
         mock_post.return_value = _FakeResponse(200, "<root><state>WARNING</state></root>")
         state = self._client().poll("REQ-001", poll_interval=0)
         self.assertEqual(state, "WARNING")
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_poll_continues_until_terminal(self, mock_post, _sleep):
         mock_post.side_effect = [
             _FakeResponse(200, "<root><state>RUNNING</state></root>"),
@@ -539,21 +539,21 @@ class TestSubmitAndPoll(unittest.TestCase):
         self.assertEqual(state, "SUCCEEDED")
         self.assertEqual(mock_post.call_count, 3)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_poll_raises_on_missing_state(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "<root><faultstring>bad</faultstring></root>")
         with self.assertRaises(ExtractError) as ctx:
             self._client().poll("REQ-001", poll_interval=0)
         self.assertIn("missing state", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_submit_disables_redirects(self, mock_post):
         xml = "<root><requestId><value>REQ-001</value></requestId></root>"
         mock_post.return_value = _FakeResponse(200, xml)
         self._client().submit("W.DS", "job-1")
         self.assertEqual(mock_post.call_args.kwargs.get("allow_redirects"), False)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_submit_rejects_redirect_response(self, mock_post):
         mock_post.return_value = _FakeResponse(
             308, headers={"Location": "https://attacker.example.com/steal"}
@@ -564,7 +564,7 @@ class TestSubmitAndPoll(unittest.TestCase):
         self.assertIn("308", str(ctx.exception))
 
     @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep", return_value=None)
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_poll_sleeps_between_attempts(self, mock_post, mock_sleep):
         mock_post.side_effect = [
             _FakeResponse(200, "<root><state>RUNNING</state></root>"),
@@ -584,7 +584,7 @@ class TestSearchAndFindFile(unittest.TestCase):
             {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_search_returns_rows(self, mock_post):
         xml = """<root>
             <Row><Field name="dID">100</Field></Row>
@@ -594,14 +594,14 @@ class TestSearchAndFindFile(unittest.TestCase):
         rows = self._client()._search("dDocTitle <starts> `x`")
         self.assertEqual(len(rows), 2)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_search_raises_on_soap_fault(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "<root><faultstring>Auth error</faultstring></root>")
         with self.assertRaises(ExtractError) as ctx:
             self._client()._search("q")
         self.assertIn("SOAP fault", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_search_raises_on_status_code_error(self, mock_post):
         xml = "<root><Field name='StatusCode'>99</Field><Field name='StatusMessage'>Err</Field></root>"
         mock_post.return_value = _FakeResponse(200, xml)
@@ -609,7 +609,7 @@ class TestSearchAndFindFile(unittest.TestCase):
             self._client()._search("q")
         self.assertIn("StatusCode=99", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_search_raises_on_parse_error(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "not xml <<< broken")
         with self.assertRaises(ExtractError) as ctx:
@@ -734,14 +734,14 @@ class TestDownload(unittest.TestCase):
             {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_raises_on_http_error(self, mock_post):
         mock_post.return_value = _FakeResponse(403, "forbidden")
         with self.assertRaises(ExtractError) as ctx:
             self._client().download("123")
         self.assertIn("GET_FILE failed", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_raises_on_soap_fault(self, mock_post):
         fault = "<root><faultstring>Access denied</faultstring></root>"
         mock_post.return_value = _FakeResponse(200, fault)
@@ -749,7 +749,7 @@ class TestDownload(unittest.TestCase):
             self._client().download("123")
         self.assertIn("SOAP fault", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_returns_attachment_matched_by_cid(self, mock_post):
         zip_bytes = b"PKfakezip_content"
         xml_envelope = (
@@ -764,7 +764,7 @@ class TestDownload(unittest.TestCase):
         result = self._client().download("123")
         self.assertEqual(result, zip_bytes)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_returns_single_attachment_when_no_cid(self, mock_post):
         zip_bytes = b"PKfakezip_no_cid"
         xml_envelope = b"<root/>"
@@ -776,7 +776,7 @@ class TestDownload(unittest.TestCase):
         result = self._client().download("123")
         self.assertEqual(result, zip_bytes)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_raises_when_multiple_attachments_no_cid_match(self, mock_post):
         xml_envelope = b"<root/>"
         body, ct = _make_multipart_body([
@@ -789,7 +789,7 @@ class TestDownload(unittest.TestCase):
             self._client().download("123")
         self.assertIn("2 attachments", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_base64_fallback(self, mock_post):
         raw = b"some binary data for base64 test"
         encoded = base64.b64encode(raw).decode()
@@ -800,14 +800,14 @@ class TestDownload(unittest.TestCase):
         result = self._client().download("123")
         self.assertIsInstance(result, bytes)
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_no_payload_raises(self, mock_post):
         mock_post.return_value = _FakeResponse(200, "<root><tiny>x</tiny></root>")
         with self.assertRaises(ExtractError) as ctx:
             self._client().download("123")
         self.assertIn("no attachment", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_invalid_xml_envelope_parse_error_is_ignored(self, mock_post):
         # ET.ParseError is swallowed; code falls through to the 'no attachment' error.
         mock_post.return_value = _FakeResponse(200, "<<< not xml >>> at all")
@@ -913,14 +913,14 @@ class TestPostNetworkErrors(unittest.TestCase):
             {"base_url": "https://example.oraclecloud.com", "username": "u", "password": "p"}
         )
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_timeout_raises_extract_error(self, mock_post):
         mock_post.side_effect = requests.exceptions.Timeout("timed out")
         with self.assertRaises(ExtractError) as ctx:
             self._client().submit("DS.Worker", "job-1")
         self.assertIn("timed out", str(ctx.exception))
 
-    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    @mock.patch("requests.Session.post")
     def test_connection_error_raises_extract_error(self, mock_post):
         mock_post.side_effect = requests.exceptions.ConnectionError("conn refused")
         with self.assertRaises(ExtractError) as ctx:

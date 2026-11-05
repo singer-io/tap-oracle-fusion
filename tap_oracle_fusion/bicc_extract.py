@@ -18,7 +18,7 @@ from zipfile import BadZipFile, ZipFile
 import requests
 import singer
 
-from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+from tap_oracle_fusion.url_safety import assert_safe_base_url, build_safe_session, UnsafeBaseURLError
 
 LOGGER = singer.get_logger()
 
@@ -70,6 +70,7 @@ class BICCExtractClient:
         self.timeout = float(config.get("request_timeout", 300))
         self.ess_url = f"{self.base_url}/{ESS_PATH}"
         self.ucm_url = f"{self.base_url}/{UCM_PATH}"
+        self.session = build_safe_session()
 
     @staticmethod
     def datastore_slug(datastore: str) -> str:
@@ -102,7 +103,7 @@ class BICCExtractClient:
             ],
         }
         try:
-            response = requests.put(
+            response = self.session.put(
                 f"{self.base_url}/{JOBS_PATH}",
                 json=job,
                 auth=(self.username, self.password),
@@ -216,7 +217,7 @@ class BICCExtractClient:
         followed to an arbitrary redirect target.
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 url,
                 data=envelope.encode("utf-8"),
                 headers={"Content-Type": "text/xml; charset=utf-8"},

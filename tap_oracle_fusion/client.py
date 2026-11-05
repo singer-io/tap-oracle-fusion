@@ -7,7 +7,7 @@ import backoff
 import requests
 import singer
 
-from tap_oracle_fusion.url_safety import assert_safe_base_url, UnsafeBaseURLError
+from tap_oracle_fusion.url_safety import assert_safe_base_url, build_safe_session, UnsafeBaseURLError
 
 LOGGER = singer.get_logger()
 REQUEST_TIMEOUT = 300
@@ -32,7 +32,7 @@ class OracleClient:
 
     def __init__(self, config: Mapping[str, Any]) -> None:
         self.config = config
-        self.session = requests.Session()
+        self.session = build_safe_session()
         self.base_url = self._resolve_base_url(config)
         self.request_timeout = float(config.get("request_timeout", REQUEST_TIMEOUT))
 
