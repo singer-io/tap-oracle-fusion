@@ -100,3 +100,17 @@ class TestAssertSafeBaseUrl(unittest.TestCase):
     def test_rejects_invalid_port(self):
         with self.assertRaises(UnsafeBaseURLError):
             assert_safe_base_url("https://example.oraclecloud.com:999999")
+
+    def test_rejects_backslash_host_bypass(self):
+        # urlparse() keeps the backslash inside the hostname, so this string
+        # ends with ".oraclecloud.com" and would otherwise pass the domain
+        # allow-list. requests/urllib3 instead treat the backslash as the
+        # end of the authority and send the request to host
+        # "169.254.169.254" (the cloud metadata IP) -- a classic
+        # parser-disagreement SSRF bypass. It must be rejected outright.
+        with self.assertRaises(UnsafeBaseURLError):
+            assert_safe_base_url("https://169.254.169.254\\foo.oraclecloud.com")
+
+    def test_rejects_backslash_anywhere(self):
+        with self.assertRaises(UnsafeBaseURLError):
+            assert_safe_base_url("https://example.oraclecloud.com\\")

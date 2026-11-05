@@ -9,6 +9,9 @@ request -- at an arbitrary internal or attacker-controlled host (SSRF).
 This module enforces that base_url:
   - uses the https scheme (no http, file, gopher, etc.)
   - does not embed credentials in the URL itself
+  - contains no backslashes, which some HTTP clients (e.g. requests/urllib3)
+    treat as authority/path separators even though urlparse() does not,
+    letting a backslash smuggle an attacker host past the domain check below
   - has a hostname ending in one of the allowed Oracle domains below, so
     credentials can only ever be sent to genuine Oracle-operated endpoints
   - uses the default HTTPS port (443), so a validated Oracle host cannot be
@@ -44,11 +47,27 @@ def _is_allowed_domain(hostname: str) -> bool:
     )
 
 
+def _reject_backslashes(url: str) -> None:
+    # urlparse() treats a backslash as an ordinary hostname character and
+    # keeps it inside netloc/hostname, so "https://host\\foo.ora
+    # clecloud.com" parses with hostname ending in ".oraclecloud.com" and
+    # passes the allow-list below. But requests/urllib3 (like browsers and
+    # most WHATWG-based URL parsers) treat a backslash as equivalent to a
+    # forward slash -- i.e. the end of the authority -- so the *actual*
+    # outbound request goes to host with everything after
+    # the backslash sent as the path. Rejecting any backslash up front
+    # closes that host/parser disagreement entirely.
+    if "\\" in url:
+        raise UnsafeBaseURLError("base_url must not contain backslashes")
+
+
 def assert_safe_base_url(url: str) -> str:
     """Validate that `url` is an https URL pointing at an allowed Oracle domain.
 
     Returns the url unchanged on success. Raises UnsafeBaseURLError otherwise.
     """
+    _reject_backslashes(url)
+
     try:
         parsed = urlparse(url)
     except ValueError as exc:
