@@ -29,6 +29,7 @@ Important optional keys:
 - bicc_job_id (or job_id/extract_job_id): existing Oracle BICC Job ID required for ESS submitRequest (example: `1`)
 - bicc_enable_ess_sync: whether sync triggers ESS submit/poll per stream before reading records (default: `true`)
 - ess_poll_interval_seconds: ESS poll interval in seconds (default: `20`)
+- max_concurrent_streams: number of streams whose BICC job creation, ESS submit/poll and manifest lookup run at the same time (default: `1`, maximum: `4`). Downloading, transforming, writing records and state still happen one stream at a time, in catalog order. Streams that resolve to the same BICC job name are always run sequentially. A failing stream stops the sync once earlier streams have been emitted; extracts already submitted for later streams are not cancelled in Oracle.
 
 Sample config:
 

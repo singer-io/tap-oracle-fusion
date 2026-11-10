@@ -26,6 +26,10 @@ JOBS_PATH = "biacm/rest/meta/jobs"
 DEFAULT_INITIAL_EXTRACT_DATE = "2000-01-01T00:00:00.000"
 TERMINAL_STATES = {"SUCCEEDED", "WARNING", "ERROR", "CANCELLED"}
 FATAL_STATES = {"ERROR", "CANCELLED"}
+# Statuses where the server rejected the request, so a retry cannot duplicate work.
+RETRYABLE_STATUS_CODES = {429, 503}
+MAX_POST_ATTEMPTS = 4
+MAX_RETRY_WAIT_SECONDS = 60
 
 
 def _set_csv_field_size_limit() -> None:
@@ -196,22 +200,36 @@ class BICCExtractClient:
         )
 
     def _post(self, url: str, envelope: str) -> requests.Response:
-        """Send a SOAP/XML POST request and return the raw response."""
-        try:
-            return requests.post(
+        """Send a SOAP/XML POST request, retrying 429/503, and return the raw response."""
+        for attempt in range(1, MAX_POST_ATTEMPTS + 1):
+            try:
+                response = requests.post(
+                    url,
+                    data=envelope.encode("utf-8"),
+                    headers={"Content-Type": "text/xml; charset=utf-8"},
+                    timeout=self.timeout,
+                )
+            except requests.exceptions.Timeout as exc:
+                raise ExtractError(
+                    f"SOAP request timed out after {self.timeout}s to {url}: {exc}"
+                ) from exc
+            except requests.exceptions.ConnectionError as exc:
+                raise ExtractError(
+                    f"SOAP request connection error to {url}: {exc}"
+                ) from exc
+            if response.status_code not in RETRYABLE_STATUS_CODES or attempt == MAX_POST_ATTEMPTS:
+                return response
+            wait = _retry_wait_seconds(response, attempt)
+            LOGGER.warning(
+                "SOAP request to %s returned %s; retrying in %ss (attempt %s/%s)",
                 url,
-                data=envelope.encode("utf-8"),
-                headers={"Content-Type": "text/xml; charset=utf-8"},
-                timeout=self.timeout,
+                response.status_code,
+                wait,
+                attempt,
+                MAX_POST_ATTEMPTS,
             )
-        except requests.exceptions.Timeout as exc:
-            raise ExtractError(
-                f"SOAP request timed out after {self.timeout}s to {url}: {exc}"
-            ) from exc
-        except requests.exceptions.ConnectionError as exc:
-            raise ExtractError(
-                f"SOAP request connection error to {url}: {exc}"
-            ) from exc
+            time.sleep(wait)
+        raise ExtractError(f"SOAP request to {url} gave no response")  # pragma: no cover
 
     def submit(self, datastore: str, job_id: str) -> str:
         """Submit an ESS extract request and return the ESS request ID."""
@@ -371,6 +389,15 @@ class BICCExtractClient:
         if blob:
             return base64.b64decode(re.sub(rb"\s+", b"", blob.group(1)))
         raise ExtractError("GET_FILE response had no attachment or decodable payload")
+
+
+def _retry_wait_seconds(response: requests.Response, attempt: int) -> int:
+    """Honor a numeric Retry-After header, else back off exponentially; capped."""
+    try:
+        wait = int(response.headers.get("Retry-After", ""))
+    except (TypeError, ValueError):
+        wait = 2 ** attempt
+    return max(1, min(wait, MAX_RETRY_WAIT_SECONDS))
 
 
 def _matches_slug(name: str, slug: str) -> bool:

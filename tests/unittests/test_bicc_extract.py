@@ -875,5 +875,52 @@ class TestPostNetworkErrors(unittest.TestCase):
         self.assertIn("connection error", str(ctx.exception))
 
 
+class TestPostRetry(unittest.TestCase):
+    def _client(self):
+        return BICCExtractClient(
+            {"base_url": "https://example", "username": "u", "password": "p"}
+        )
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep")
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_retries_429_then_succeeds(self, mock_post, mock_sleep):
+        mock_post.side_effect = [
+            _FakeResponse(429, "slow down", headers={"Retry-After": "7"}),
+            _FakeResponse(200, "ok"),
+        ]
+        resp = self._client()._post("https://example/x", "<e/>")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mock_post.call_count, 2)
+        mock_sleep.assert_called_once_with(7)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep")
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_returns_last_response_after_max_attempts(self, mock_post, mock_sleep):
+        mock_post.return_value = _FakeResponse(503, "busy")
+        resp = self._client()._post("https://example/x", "<e/>")
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(mock_post.call_count, 4)
+        self.assertEqual(mock_sleep.call_count, 3)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep")
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_retry_after_is_capped(self, mock_post, mock_sleep):
+        mock_post.side_effect = [
+            _FakeResponse(429, "", headers={"Retry-After": "9999"}),
+            _FakeResponse(200, "ok"),
+        ]
+        self._client()._post("https://example/x", "<e/>")
+        mock_sleep.assert_called_once_with(60)
+
+    @mock.patch("tap_oracle_fusion.bicc_extract.time.sleep")
+    @mock.patch("tap_oracle_fusion.bicc_extract.requests.post")
+    def test_other_statuses_are_not_retried(self, mock_post, mock_sleep):
+        mock_post.return_value = _FakeResponse(500, "boom")
+        resp = self._client()._post("https://example/x", "<e/>")
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(mock_post.call_count, 1)
+        mock_sleep.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
