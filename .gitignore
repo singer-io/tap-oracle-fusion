@@ -113,3 +113,5 @@ configs/
 current_state/
 output/
 logs/
+
+tmp/

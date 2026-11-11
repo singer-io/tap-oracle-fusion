@@ -1,7 +1,8 @@
 """Sync logic for Oracle Fusion REST and BICC datastore streams."""
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timezone
 import math
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Union
 from urllib.parse import unquote
 
 import singer
@@ -17,6 +18,7 @@ from tap_oracle_fusion.discover import get_stream_resource_map
 from tap_oracle_fusion.schema import DATASTORE_KEY_METADATA_KEY, ENTITY_SET_METADATA_KEY
 
 LOGGER = singer.get_logger()
+MAX_CONCURRENT_STREAMS_LIMIT = 4
 
 
 def _sanitize_float_values(obj: Any) -> Any:
@@ -214,6 +216,112 @@ def _build_incremental_query(
     return {"q": query_expression}
 
 
+def _get_max_concurrent_streams(config: Mapping[str, Any]) -> int:
+    """Return the configured stream concurrency; missing or invalid means sequential."""
+    raw = config.get("max_concurrent_streams", 1)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        LOGGER.warning("Invalid max_concurrent_streams=%r; running sequentially", raw)
+        return 1
+    if value > MAX_CONCURRENT_STREAMS_LIMIT:
+        LOGGER.warning(
+            "max_concurrent_streams=%s exceeds the limit; using %s",
+            value,
+            MAX_CONCURRENT_STREAMS_LIMIT,
+        )
+    return max(1, min(value, MAX_CONCURRENT_STREAMS_LIMIT))
+
+
+def _resolve_stream_path(
+    config: Mapping[str, Any],
+    catalog_entry: singer.CatalogEntry,
+    resource_map: Dict[str, Any],
+) -> str:
+    """Return the stream's Oracle path; resource_map caches the discovery fallback lookup."""
+    path = _get_oracle_path(catalog_entry)
+    if path:
+        return path
+    if resource_map.get("map") is None:
+        LOGGER.info(
+            "Catalog missing entity-set metadata for one or more streams; "
+            "resolving stream paths from discovery candidates."
+        )
+        resource_map["map"] = get_stream_resource_map(config)
+    return resource_map["map"].get(catalog_entry.tap_stream_id) or ""
+
+
+class _ExtractPrefetcher:
+    """Runs BICC job creation, submit, poll and manifest lookup for upcoming streams.
+
+    At most `limit` streams are prepared ahead of the one being emitted, so Oracle
+    never holds more than `limit` finished-but-undelivered extracts.
+    """
+
+    def __init__(
+        self,
+        start_extract: Callable[[str, str], Iterator[Dict[str, Any]]],
+        jobs: Dict[str, str],
+        limit: int,
+    ) -> None:
+        self._start_extract = start_extract
+        self._pending = list(jobs.items())
+        self._limit = limit
+        self._futures: Dict[str, Future] = {}
+        self._executor = (
+            ThreadPoolExecutor(max_workers=limit) if limit > 1 and len(jobs) > 1 else None
+        )
+
+    def __enter__(self) -> "_ExtractPrefetcher":
+        self._fill()
+        return self
+
+    def __exit__(self, *exc_info: Any) -> None:
+        if self._executor:
+            self._executor.shutdown(wait=True, cancel_futures=True)
+
+    def _fill(self) -> None:
+        while self._executor and self._pending and len(self._futures) < self._limit:
+            stream_name, datastore = self._pending.pop(0)
+            self._futures[stream_name] = self._executor.submit(
+                self._start_extract, stream_name, datastore
+            )
+
+    def take(self, stream_name: str) -> Optional[Iterator[Dict[str, Any]]]:
+        """Return the prepared record iterator, or None if the stream was not prefetched."""
+        future = self._futures.pop(stream_name, None)
+        if future is None:
+            return None
+        self._fill()
+        return future.result()
+
+
+def _plan_prefetch(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    config: Mapping[str, Any],
+    catalog: singer.Catalog,
+    selected_streams: List[Any],
+    bicc_client: BICCExtractClient,
+    limit: int,
+    resource_map: Dict[str, Any],
+) -> Dict[str, str]:
+    """Map stream name to BICC datastore for streams that can be prepared concurrently."""
+    if limit <= 1 or len(selected_streams) <= 1:
+        return {}
+    jobs: Dict[str, str] = {}
+    for selected_stream in selected_streams:
+        catalog_entry = catalog.get_stream(selected_stream.tap_stream_id)
+        path = _resolve_stream_path(config, catalog_entry, resource_map)
+        datastore = _get_datastore_name(catalog_entry, path) if _metadata_path_is_bicc(path) else None
+        if datastore:
+            jobs[catalog_entry.tap_stream_id] = datastore
+    slugs = {bicc_client.datastore_slug(datastore) for datastore in jobs.values()}
+    if len(slugs) < len(jobs):
+        # Streams sharing a job name would share Oracle's last extract date.
+        LOGGER.warning("Selected streams share a BICC job name; running sequentially.")
+        return {}
+    return jobs
+
+
 def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, Any]) -> None:  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """Run the sync loop for all selected streams."""
     if not _state_is_valid(state):
@@ -221,14 +329,54 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
 
     client = OracleClient(config)
     bicc_client = BICCExtractClient(config)
-    stream_to_path: Optional[Dict[str, str]] = None
-    selected_streams = catalog.get_selected_streams(state)
+    resource_map: Dict[str, Any] = {"map": None}
+    selected_streams = list(catalog.get_selected_streams(state))
     ess_poll_interval = int(config.get("ess_poll_interval_seconds", 20))
     ucm_poll_interval = int(config.get("ucm_poll_interval_seconds", 12))
     ucm_max_attempts = int(config.get("ucm_max_attempts", 30))
     initial_extract_date = str(config.get("initial_extract_date", DEFAULT_INITIAL_EXTRACT_DATE))
     force_full = bool(config.get("bicc_force_full_sync", False))
-    with singer.Transformer() as transformer:
+
+    def start_extract(stream_name: str, datastore: str) -> Iterator[Dict[str, Any]]:
+        try:
+            job_name = f"file_{bicc_client.datastore_slug(datastore)}"
+            if force_full:
+                suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+                job_name = f"{job_name}__full_{suffix}"
+            job_id = bicc_client.create_bicc_job(
+                datastore=datastore,
+                initial_extract_date=initial_extract_date,
+                job_name=job_name,
+            )
+
+            rows, _ = bicc_client.run_extract_to_rows(
+                datastore=datastore,
+                job_id=job_id,
+                ess_poll_interval=ess_poll_interval,
+                ucm_poll_interval=ucm_poll_interval,
+                ucm_max_attempts=ucm_max_attempts,
+            )
+            return rows
+        except ExtractError as err:
+            LOGGER.error(
+                "BICC extract failed for stream=%s datastore=%s: %s",
+                stream_name,
+                datastore,
+                err,
+            )
+            raise
+
+    max_concurrent_streams = _get_max_concurrent_streams(config)
+    prefetch_jobs = _plan_prefetch(
+        config,
+        catalog,
+        selected_streams,
+        bicc_client,
+        max_concurrent_streams,
+        resource_map,
+    )
+    prefetcher = _ExtractPrefetcher(start_extract, prefetch_jobs, max_concurrent_streams)
+    with prefetcher, singer.Transformer() as transformer:
         for selected_stream in selected_streams:
             catalog_entry = catalog.get_stream(selected_stream.tap_stream_id)
             stream_name = catalog_entry.tap_stream_id
@@ -242,15 +390,7 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
             singer.write_schema(stream_name, stream_schema, stream_key_properties)
 
             replication_key = _get_replication_key(catalog_entry)
-            path = _get_oracle_path(catalog_entry)
-            if not path:
-                if stream_to_path is None:
-                    LOGGER.info(
-                        "Catalog missing entity-set metadata for one or more streams; "
-                        "resolving stream paths from discovery candidates."
-                    )
-                    stream_to_path = get_stream_resource_map(config)
-                path = stream_to_path.get(stream_name)
+            path = _resolve_stream_path(config, catalog_entry, resource_map)
             if not path:
                 raise RuntimeError(
                     f"Could not resolve Oracle path for stream {stream_name}. "
@@ -283,32 +423,9 @@ def sync(config: Mapping[str, Any], catalog: singer.Catalog, state: Dict[str, An
                     raise RuntimeError(
                         f"Could not resolve BICC datastore name for stream {stream_name}."
                     )
-                try:
-                    job_name = f"file_{bicc_client.datastore_slug(datastore)}"
-                    if force_full:
-                        suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
-                        job_name = f"{job_name}__full_{suffix}"
-                    job_id = bicc_client.create_bicc_job(
-                        datastore=datastore,
-                        initial_extract_date=initial_extract_date,
-                        job_name=job_name,
-                    )
-
-                    records_iter, _ = bicc_client.run_extract_to_rows(
-                        datastore=datastore,
-                        job_id=job_id,
-                        ess_poll_interval=ess_poll_interval,
-                        ucm_poll_interval=ucm_poll_interval,
-                        ucm_max_attempts=ucm_max_attempts,
-                    )
-                except ExtractError as err:
-                    LOGGER.error(
-                        "BICC extract failed for stream=%s datastore=%s: %s",
-                        stream_name,
-                        datastore,
-                        err,
-                    )
-                    raise
+                records_iter = prefetcher.take(stream_name)
+                if records_iter is None:
+                    records_iter = start_extract(stream_name, datastore)
             else:
                 records_iter = client.get_records(path, params=params)
 
